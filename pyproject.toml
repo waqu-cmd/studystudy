@@ -1,0 +1,93 @@
+# ============================================================
+# 企业知识库智能分析 Agent 平台
+# 本文件是依赖的唯一权威来源（single source of truth）。
+# 安装：pip install -e ".[dev]"
+# ============================================================
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "enterprise-kb-agent"
+version = "0.1.0"
+description = "基于 LangGraph + MCP + ChromaDB 的 Supervisor 多 Agent 企业知识库问答系统"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "请填你的名字", email = "you@example.com" }]
+keywords = ["langgraph", "mcp", "rag", "chromadb", "fastapi", "agent"]
+
+dependencies = [
+  # ---------- 核心框架 ----------
+  "fastapi==0.115.6",
+  "uvicorn[standard]==0.32.1",
+  "langgraph==0.2.60",
+  "langchain==0.3.13",
+  "langchain-openai==0.2.14",
+  "langchain-mcp-adapters==0.1.4",
+  "chromadb==0.5.23",
+  "mcp==1.9.2",
+
+  # ---------- 配置与工具 ----------
+  "pydantic==2.10.4",
+  "pydantic-settings==2.7.0",
+  "python-dotenv==1.0.1",
+  "loguru==0.7.3",
+
+  # ---------- 文档解析与检索 ----------
+  "pypdf==5.1.0",
+  "markdown-it-py==3.0.0",
+  "rank-bm25==0.2.2",
+
+  # ---------- HTTP ----------
+  "httpx==0.28.1",
+
+  # ---------- 版本锚点 ----------
+  # LangChain 生态耦合极紧，以下间接依赖必须锁死。
+  "starlette>=0.40.0,<0.42.0",
+  "langchain-core==0.3.63",
+  "langchain-text-splitters==0.3.8",
+  "langchain-community==0.3.5",
+  "langgraph-checkpoint==2.1.2",
+  "langgraph-sdk==0.1.74",
+  "langsmith==0.1.147",
+  "openai==1.109.1",
+  "tiktoken==0.14.0",
+  "chroma-hnswlib==0.7.6",
+  "numpy==1.26.4",
+  "onnxruntime==1.30.0",
+  "tokenizers==0.20.3",
+  "huggingface_hub==0.36.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.3.4",
+  "pytest-asyncio==0.25.0",
+  "pytest-cov==6.0.0",
+]
+
+# ---------- setuptools ----------
+[tool.setuptools]
+py-modules = []
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+namespaces = false
+
+# ---------- pytest ----------
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+
+# ---------- coverage ----------
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
