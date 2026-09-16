@@ -1,0 +1,335 @@
+{
+  "stage": "stage1",
+  "captured_at": "2026-09-16 10:21:23",
+  "as_of_date": "2026-09-16",
+  "pipeline": "朴素 RAG：向量(Chroma) + BM25 -> RRF(k=60) -> 单次 LLM 生成",
+  "config": {
+    "embedding_provider": "dashscope",
+    "embedding_model": "text-embedding-v4",
+    "embedding_dim": 1024,
+    "embedding_batch_size": 10,
+    "llm_provider": "dashscope",
+    "llm_model": "deepseek-v4-flash",
+    "chroma_collection": "enterprise_kb",
+    "top_k": 10,
+    "rrf_k": 60
+  },
+  "corpus": {
+    "documents": 5,
+    "chunks_total": 20,
+    "chunks_active": 12,
+    "chunks_expired": 8
+  },
+  "summary": {
+    "with_expiry_filter": {
+      "hit_at_3": {
+        "n": 5,
+        "hit_at_3": 1.0
+      },
+      "mrr": {
+        "n": 5,
+        "reciprocal_rank": 1.0
+      }
+    },
+    "without_expiry_filter": {
+      "hit_at_3": {
+        "n": 5,
+        "hit_at_3": 1.0
+      },
+      "mrr": {
+        "n": 5,
+        "reciprocal_rank": 0.6333
+      }
+    },
+    "note": "Hit@3 与 MRR 均在 with_answer=false 的纯检索模式下测量"
+  },
+  "cases": [
+    {
+      "id": "q1",
+      "query": "2026年第三季度新客户签约的返点比例是多少？",
+      "trap": false,
+      "expected_chunk_ids": [
+        "sales_policy_2026q3_p1"
+      ],
+      "expected_version": "2026Q3",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p0",
+        "it_security_policy_p1"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v2"
+      ],
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "q2",
+      "query": "华东区的区域补贴在标准返点基础上上浮多少个百分点？",
+      "trap": false,
+      "expected_chunk_ids": [
+        "sales_policy_2026q3_p1"
+      ],
+      "expected_version": "2026Q3",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p2",
+        "expense_reimbursement_policy_p2"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v3"
+      ],
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "q3",
+      "query": "单笔订单金额超过多少需要报销售VP审批？",
+      "trap": false,
+      "expected_chunk_ids": [
+        "sales_policy_2026q3_p1"
+      ],
+      "expected_version": "2026Q3",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p1",
+        "expense_reimbursement_policy_p2",
+        "expense_reimbursement_policy_p3",
+        "sales_policy_2026q3_p2",
+        "it_security_policy_p1"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "v3",
+        "v3",
+        "2026Q3",
+        "v2"
+      ],
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "q4",
+      "query": "员工出差一线城市的住宿费上限是多少？",
+      "trap": false,
+      "expected_chunk_ids": [
+        "expense_reimbursement_policy_p1"
+      ],
+      "expected_version": "v3",
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p2",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v3"
+      ],
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "q5",
+      "query": "公司账号密码的最短长度要求是多少位？",
+      "trap": false,
+      "expected_chunk_ids": [
+        "it_security_policy_p1"
+      ],
+      "expected_version": "v2",
+      "retrieved_chunk_ids": [
+        "it_security_policy_p1",
+        "it_security_policy_p0",
+        "sales_policy_2026q3_p2",
+        "it_security_policy_p2",
+        "it_security_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "2026Q3",
+        "v2",
+        "v2"
+      ],
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "t1",
+      "query": "2026年第一季度的销售返点政策是怎么规定的？",
+      "trap": true,
+      "expected_chunk_ids": [],
+      "expected_version": "2026Q3",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p2",
+        "expense_reimbursement_policy_p2"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v3"
+      ],
+      "hit_at_3": null,
+      "reciprocal_rank": null,
+      "note": "Q1 已于 2026-03-31 失效。正确行为：检索不到 Q1 的块，回答不得出现 2.5% 或 500 万这两个仅属于 Q1 的数字"
+    }
+  ],
+  "cases_without_expiry_filter": [
+    {
+      "id": "q1",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q1_p1",
+        "sales_policy_2026q2_p1",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q1_p3",
+        "sales_policy_2026q3_p3"
+      ],
+      "hit_at_3": true,
+      "reciprocal_rank": 0.3333
+    },
+    {
+      "id": "q2",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q2_p1",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q1_p1",
+        "sales_policy_2026q1_p3",
+        "it_security_policy_p1"
+      ],
+      "hit_at_3": true,
+      "reciprocal_rank": 0.5
+    },
+    {
+      "id": "q3",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q1_p1",
+        "sales_policy_2026q2_p1",
+        "sales_policy_2026q3_p1",
+        "expense_reimbursement_policy_p2",
+        "expense_reimbursement_policy_p3"
+      ],
+      "hit_at_3": true,
+      "reciprocal_rank": 0.3333
+    },
+    {
+      "id": "q4",
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p2",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p3"
+      ],
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "q5",
+      "retrieved_chunk_ids": [
+        "it_security_policy_p1",
+        "it_security_policy_p0",
+        "sales_policy_2026q2_p2",
+        "it_security_policy_p2",
+        "sales_policy_2026q1_p2"
+      ],
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "t1",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q1_p3",
+        "sales_policy_2026q1_p0",
+        "sales_policy_2026q2_p0",
+        "sales_policy_2026q2_p3"
+      ],
+      "hit_at_3": null,
+      "reciprocal_rank": null
+    }
+  ],
+  "citation_extraction_samples": {
+    "半角方括号": [
+      "sales_policy_2026q3_p3"
+    ],
+    "【来源：】写法": [
+      "sales_policy_2026q3_p3"
+    ],
+    "全角圆括号": [
+      "sales_policy_2026q3_p3"
+    ],
+    "裸 id": [
+      "sales_policy_2026q3_p3",
+      "sales_policy_2026q3_p1"
+    ],
+    "编造 id": [
+      "sales_policy_2026q3_p3"
+    ],
+    "无引用": []
+  },
+  "generated": {
+    "q1": {
+      "query": "2026年第三季度新客户签约的返点比例是多少？",
+      "answer": "2026年第三季度新客户签约的标准返点比例为签约金额的 3.5% [sales_policy_2026q3_p1]。",
+      "citations": [
+        "sales_policy_2026q3_p1"
+      ],
+      "top3": [
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p2"
+      ]
+    },
+    "t1": {
+      "query": "2026年第一季度的销售返点政策是怎么规定的？",
+      "answer": "根据现有资料无法确认2026年第一季度的销售返点政策。参考资料仅包含2026年第三季度（有效期2026-07-01至2026-09-30）的政策内容，无第一季度相关信息。",
+      "citations": [],
+      "top3": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p0"
+      ]
+    },
+    "q5": {
+      "query": "公司账号密码的最短长度要求是多少位？",
+      "answer": "公司账号密码的最短长度要求是 **12 位** [it_security_policy_p1]。",
+      "citations": [
+        "it_security_policy_p1"
+      ],
+      "top3": [
+        "it_security_policy_p1",
+        "it_security_policy_p0",
+        "sales_policy_2026q3_p2"
+      ]
+    }
+  },
+  "notes": [
+    "本文件是阶段 1（朴素 RAG）的基线快照。蓝图阶段 7 要求 baseline.json + test_regression.py，用于后续改动后自动对比、防止指标退化。",
+    "指标均在 with_answer=false 的纯检索模式下测量，不依赖 LLM 的随机性，因此可复现。",
+    "核心结论一：时效过滤是版本准确率的前提。关闭 expire_ord 过滤后，q1/q2/q3 的 top1 全部变为已过期的 2026Q1 / 2026Q2 版本，MRR 从 1.0 降到 0.6333。",
+    "核心结论二：5 篇文档共 20 块，其中 8 块（Q1+Q2 各 4 块）已过期，过滤后仅 12 块参与检索。",
+    "核心结论三：陷阱题 t1（询问已失效的 2026Q1 返点政策）在启用过滤时得到干净拒答，答案中未出现仅属于 Q1 的 2.5% 与 500 万两个数字。",
+    "时效注意：2026Q3 政策于 2026-09-30 到期，此日期之后本快照中的检索结果会整体变化，需重新采集。",
+    "cases_without_expiry_filter 是同一批问题在 include_expired=true 下的对照结果，用于在阶段 7 量化「时效过滤」这一设计的独立贡献。"
+  ]
+}

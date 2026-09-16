@@ -38,6 +38,8 @@ dependencies = [
   "pypdf==5.1.0",
   "markdown-it-py==3.0.0",
   "rank-bm25==0.2.2",
+  # chunker 直接 import yaml 解析 front-matter，属直接依赖，必须显式声明
+  "pyyaml==6.0.3",
 
   # ---------- HTTP ----------
   "httpx==0.28.1",
@@ -50,7 +52,9 @@ dependencies = [
   "langchain-community==0.3.5",
   "langgraph-checkpoint==2.1.2",
   "langgraph-sdk==0.1.74",
-  "langsmith==0.1.147",
+  # 本项目刻意不声明 langsmith：不使用 LangSmith 追踪，config 层会在进程启动时
+  # 强制清除 LANGCHAIN_* / LANGSMITH_* 环境变量。它仍会作为 langchain-core 的
+  # 传递依赖被安装（框架内部 import 它），属于框架自带，不是本项目的用法。
   "openai==1.109.1",
   "tiktoken==0.14.0",
   "chroma-hnswlib==0.7.6",

@@ -68,6 +68,18 @@ class InterceptHandler(logging.Handler):
         )
 
 
+# 需要静音的噪声 logger。
+# chromadb 0.5.23 内置的 posthog telemetry 与新版 posthog 库签名不兼容，每次
+# client / collection 操作都会打一条 ERROR 级「Failed to send telemetry event」。
+# 它与业务无关，却会淹没真正的错误，因此整体压到 CRITICAL。
+# 注意：Settings(anonymized_telemetry=False) 在 0.5.23 上并不能阻止该尝试。
+_SILENCED_LOGGERS = (
+    "chromadb.telemetry",
+    "chromadb.telemetry.product",
+    "chromadb.telemetry.product.posthog",
+)
+
+
 def _wire_stdlib_logging() -> None:
     """让 uvicorn / httpx / langchain 等第三方库的日志也走 loguru。"""
     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
@@ -75,6 +87,8 @@ def _wire_stdlib_logging() -> None:
         std = logging.getLogger(name)
         std.handlers = [InterceptHandler()]
         std.propagate = False
+    for name in _SILENCED_LOGGERS:
+        logging.getLogger(name).setLevel(logging.CRITICAL)
 
 
 def setup_logging(*, log_file: bool = True, force: bool = False) -> None:
