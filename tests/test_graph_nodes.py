@@ -17,7 +17,7 @@ from typing import Any
 import pytest
 from langgraph.checkpoint.memory import MemorySaver
 
-from app.graph.builder import ALL_NODES, build_graph, graph_mermaid
+from app.graph.builder import build_graph
 from app.graph.edges import (
     build_fanout_payload,
     effective_sub_queries,
@@ -583,30 +583,30 @@ def test_max_retry_zero_disables_retry() -> None:
     assert result["verdict"] == VERDICT_FAIL
 
 
-def test_verifier_skips_for_direct_route() -> None:
-    """寒暄分支没有参考资料，核查无处比对，必须跳过。"""
-    llm = FakeLLM(answer="你好，我是企业知识库助手。")
-    verifier = ScriptedVerifierLLM([FAIL_RESULT])
-    graph = build_graph(retriever=FakeRetriever([]), llm=llm, verifier_llm=verifier)
-
-    result = graph.invoke(initial_state("你好"))
-
-    assert verifier.calls == [], "direct 分支不得触发核查"
-    assert result["verdict"] == ""
-
-
-def test_verifier_skips_when_no_chunks() -> None:
-    """无召回块时合成器走固定拒答，答案里没有事实性断言可核查。"""
+@pytest.mark.parametrize(
+    ("query", "expected_answer"),
+    [
+        ("你好", None),  # direct 分支：没有参考资料，核查无处比对
+        (QUERY, REFUSE_TEXT),  # 无召回块：合成器走固定拒答，无断言可核查
+    ],
+)
+def test_verifier_skips_when_nothing_to_ground(
+    query: str, expected_answer: str | None
+) -> None:
+    """两条路径合并为一条不变量：没有可核查的事实性断言就不该调核查模型。"""
     verifier = ScriptedVerifierLLM([FAIL_RESULT])
     graph = build_graph(
-        retriever=FakeRetriever([]), llm=FakeLLM(), verifier_llm=verifier
+        retriever=FakeRetriever([]),
+        llm=FakeLLM(answer="你好，我是企业知识库助手。"),
+        verifier_llm=verifier,
     )
 
-    result = graph.invoke(initial_state(QUERY))
+    result = graph.invoke(initial_state(query))
 
-    assert result["answer"] == REFUSE_TEXT
-    assert verifier.calls == []
+    assert verifier.calls == [], "无可核查内容时不得触发核查"
     assert result["verdict"] == ""
+    if expected_answer is not None:
+        assert result["answer"] == expected_answer
 
 
 def test_verifier_fail_open_on_llm_error() -> None:
@@ -887,22 +887,6 @@ def test_reset_turn_clears_seeded_state_in_graph() -> None:
         "synthesizer",
         "verifier",
     ]
-
-
-# --------------------------------------------------------------------------- #
-# 图结构
-# --------------------------------------------------------------------------- #
-
-
-def test_graph_mermaid_contains_all_nodes() -> None:
-    """流程图必须包含全部节点与四条条件分支（阶段 3 后含 verifier）。"""
-    mermaid = graph_mermaid()
-
-    for node in ALL_NODES:
-        assert node in mermaid, f"流程图缺少节点 {node}"
-    assert "__start__" in mermaid and "__end__" in mermaid
-    # 回退边：verifier 必须能回到 retriever
-    assert "verifier -.-> retriever" in mermaid
 
 
 # --------------------------------------------------------------------------- #

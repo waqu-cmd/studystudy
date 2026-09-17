@@ -26,7 +26,7 @@ chunk_id = f"{doc_id}_p{index}" 是确定性的，写入用 upsert。但块数�
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -38,7 +38,6 @@ from pypdf import PdfReader
 
 from app.core.config import PROJECT_ROOT, settings
 from app.core.llm import embed_texts
-from app.core.logging import logger
 from app.rag.chunker import Chunk, chunk_document
 
 SUPPORTED_SUFFIXES = {".md", ".markdown", ".txt", ".pdf"}
@@ -70,7 +69,6 @@ def get_chroma_client(path: str | Path | None = None) -> chromadb.ClientAPI:
             path=key,
             settings=ChromaSettings(anonymized_telemetry=False),
         )
-        logger.debug("Chroma client 就绪 | path={}", key)
     return _client_cache[key]
 
 
@@ -84,7 +82,6 @@ def get_collection(name: str | None = None) -> Collection:
             embedding_function=None,
             metadata={"hnsw:space": "cosine"},
         )
-        logger.debug("Chroma collection 就绪 | name={}", collection_name)
     return _collection_cache[collection_name]
 
 
@@ -164,13 +161,7 @@ class Indexer:
         self._collection = None
         existed = drop_collection()
         _notify_corpus_changed()
-        logger.warning("已清空 collection | name={}", settings.chroma_collection)
         return existed
-
-    def delete_document(self, doc_id: str) -> None:
-        """按 doc_id 删除该文档的全部块。"""
-        self.collection.delete(where={"doc_id": doc_id})
-        _notify_corpus_changed()
 
     # ---------------- 索引 ----------------
 
@@ -193,7 +184,6 @@ class Indexer:
             for p in target.iterdir()
             if p.is_file() and p.suffix.lower() in SUPPORTED_SUFFIXES
         )
-        logger.info("开始批量索引 | dir={} | files={}", target, len(files))
         return [self.index_file(p, force=force) for p in files]
 
     def index_file(self, raw_path: str | Path, *, force: bool = True) -> IndexOutcome:
@@ -227,7 +217,6 @@ class Indexer:
             version = str(chunks[0].metadata["version"])
 
             if not force and self._existing_hash(doc_id) == doc_hash:
-                logger.info("内容未变化，跳过 | doc_id={} | chunks={}", doc_id, len(chunks))
                 return IndexOutcome(
                     path=display,
                     status="skipped",
@@ -242,13 +231,6 @@ class Indexer:
             self._write(chunks, vectors, doc_hash=doc_hash)
             _notify_corpus_changed()
 
-            logger.info(
-                "索引完成 | doc_id={} | version={} | chunks={} | collection={}",
-                doc_id,
-                version,
-                len(chunks),
-                self.count(),
-            )
             return IndexOutcome(
                 path=display,
                 status="indexed",
@@ -258,7 +240,6 @@ class Indexer:
                 chunks=len(chunks),
             )
         except Exception as exc:  # noqa: BLE001 - 单文件失败不应中断整批
-            logger.exception("索引失败 | path={}", display)
             return IndexOutcome(
                 path=display, status="failed", message=f"{type(exc).__name__}: {exc}"
             )
@@ -320,7 +301,6 @@ class Indexer:
                 ).strftime("%Y-%m-%d"),
                 "source": "pdf",
             }
-            logger.info("PDF 使用合成元数据 | path={} | doc_id={}", path.name, path.stem)
             return text, defaults
 
         return path.read_text(encoding="utf-8"), None

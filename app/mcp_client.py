@@ -66,14 +66,12 @@ import threading
 import time
 from concurrent.futures import TimeoutError as FuturesTimeout
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_mcp_adapters.sessions import Connection
 
 from app.core.config import PROJECT_ROOT, settings
-from app.core.logging import logger
 
 SERVER_CHROMA = "chroma"
 SERVER_FILESYSTEM = "filesystem"
@@ -218,11 +216,10 @@ def enabled_server_names() -> list[str]:
         name = piece.strip().lower()
         if not name:
             continue
-        if name in SERVER_MODULES:
-            if name not in names:
-                names.append(name)
-        else:
-            logger.warning("忽略未知的 MCP Server 名：{}", name)
+        if name not in SERVER_MODULES:
+            continue
+        if name not in names:
+            names.append(name)
     return names
 
 
@@ -232,11 +229,6 @@ def default_connections() -> dict[str, Connection]:
         name: build_stdio_connection(SERVER_MODULES[name])
         for name in enabled_server_names()
     }
-
-
-def tools_snapshot_path() -> Path:
-    """动态发现结果的落盘位置，供调试与「工具清单可核查」使用。"""
-    return PROJECT_ROOT / "logs" / "mcp_tools.json"
 
 
 # ============================== 客户端 ==============================
@@ -362,20 +354,17 @@ class MCPToolClient:
 
         Returns:
             True 表示至少一个 Server 就绪。全部失败返回 False，但**不抛异常**
-            —— 调用方据此打日志并继续启动服务。
+            —— 调用方据此继续启动服务。
         """
         if self.ready:
-            logger.debug("MCPToolClient 已就绪，跳过重复启动")
             return True
         if not self._connections:
-            logger.warning("未配置任何 MCP Server（检查 MCP_SERVERS），MCP 通道不可用")
             return False
 
         with self._start_lock:
             # running 已为真但尚未 ready，说明另一次启动仍在握手 —— 此时也必须
             # 当 follower，否则会另起一个事件循环（旧实现正是这样丢掉 chroma 的）。
             if self.running or self._starting:
-                logger.debug("MCP 启动已在进行中，等待其完成")
                 leader = False
             else:
                 leader = True
@@ -400,29 +389,12 @@ class MCPToolClient:
                 # 交还 leadership，让后续调用可以重试，而不是永久卡在 follower 态
                 with self._start_lock:
                     self._starting = False
-            logger.error(
-                "MCP 握手超时（{}s）| status={}", self._start_timeout, self.status_map
-            )
             return False
 
         ok = [name for name, state in self.status_map.items() if state == "ok"]
         if leader:
             with self._start_lock:
                 self._starting = False
-            if ok:
-                logger.info(
-                    "MCP 通道就绪 | servers={} | tools={}",
-                    ok,
-                    sorted(self.tool_index),
-                )
-            else:
-                logger.error("全部 MCP Server 均不可用 | status={}", self.status_map)
-        else:
-            # follower 与 leader 共享同一次启动结果，不再重复打「就绪」日志，
-            # 否则 fan-out 下同一行会被打印 N 次，掩盖真正的启动耗时。
-            logger.debug(
-                "MCP 启动跟随者返回 | 就绪={} | tools={}", ok, sorted(self.tool_index)
-            )
         return bool(ok)
 
     def ensure_started(self) -> bool:
@@ -446,8 +418,10 @@ class MCPToolClient:
         self._loop = loop
         try:
             loop.run_until_complete(self._serve_all())
-        except BaseException as exc:  # noqa: BLE001 - 后台线程不能把异常抛给解释器
-            logger.error("MCP 后台事件循环异常：{}", summarize_exception(exc))
+        except BaseException:  # noqa: BLE001 - 后台线程不能把异常抛给解释器
+            # 各 Server 的失败已在 _serve_one 里收敛进 status_map。此处只需保证
+            # 线程不把异常抛给解释器，且不打断 finally 的事件循环收尾。
+            pass
         finally:
             try:
                 # 收尾未完成的异步生成器，避免 "Task was destroyed but it is pending"
@@ -479,26 +453,13 @@ class MCPToolClient:
                 names = [tool.name for tool in listed.tools]
 
                 with self._lock:
-                    conflicts = {
-                        tool_name: self._tool_index[tool_name]
-                        for tool_name in names
-                        if tool_name in self._tool_index
-                    }
                     self._sessions[name] = session
                     self._tool_names[name] = names
                     for tool_name in names:
-                        # setdefault：先连上的 Server 取得路由权，冲突只告警不覆盖
+                        # setdefault：先连上的 Server 取得路由权，冲突不覆盖
                         self._tool_index.setdefault(tool_name, name)
                     self._status[name] = "ok"
 
-                if conflicts:
-                    logger.warning(
-                        "工具名冲突 | server={} | 已被占用={}（本次不参与路由）",
-                        name,
-                        conflicts,
-                    )
-
-                logger.info("MCP Server 已连接 | server={} | tools={}", name, names)
                 # 工具已进路由表 → 本 Server 视为落定；之后挂起等停止信号
                 self._mark_settled(name)
                 settled = True
@@ -509,12 +470,6 @@ class MCPToolClient:
             with self._lock:
                 self._sessions.pop(name, None)
                 self._status[name] = f"error: {reason}"
-            logger.error(
-                "MCP Server 连接失败 | server={} | 原因={}\n{}",
-                name,
-                reason,
-                "\n".join(flatten_exception(exc)),
-            )
         finally:
             if not settled:
                 self._mark_settled(name)
@@ -536,40 +491,10 @@ class MCPToolClient:
                 break
 
         thread.join(timeout)
-        if thread.is_alive():
-            logger.warning("MCP 后台线程未能在 {}s 内退出", timeout)
-        else:
-            logger.info("MCP 通道已关闭")
-
         self._thread = None
         with self._lock:
             self._stop_events.clear()
             self._sessions.clear()
-
-    def write_tools_snapshot(self) -> Path | None:
-        """把动态发现的工具清单落盘，便于人工核查「到底发现了什么」。"""
-        index = self.tool_index
-        if not index:
-            return None
-        path = tools_snapshot_path()
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(
-                json.dumps(
-                    {
-                        "status": self.status_map,
-                        "tools": index,
-                        "by_server": {n: self.tool_names(n) for n in self.server_names},
-                    },
-                    ensure_ascii=False,
-                    indent=2,
-                ),
-                encoding="utf-8",
-            )
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("工具清单落盘失败：{}", exc)
-            return None
-        return path
 
     # ---------------- 工具调用 ----------------
 
@@ -650,14 +575,12 @@ class MCPToolClient:
             reason = summarize_exception(exc)
             with self._lock:
                 self._status[target] = f"error: {reason}"
-            logger.warning("工具调用异常 | tool={} | {}", tool, reason)
             return fail(f"调用 {tool!r} 失败：{reason}")
 
         elapsed = int((time.perf_counter() - started) * 1000)
         if getattr(raw, "isError", False):
             _, text = parse_tool_content(getattr(raw, "content", None))
             message = text.strip() or "工具返回 isError 但无内容"
-            logger.warning("工具返回错误 | tool={} | {}", tool, message[:200])
             return MCPToolResult(
                 ok=False,
                 server=target,
@@ -781,5 +704,4 @@ __all__ = [
     "parse_tool_content",
     "reset_default_mcp",
     "summarize_exception",
-    "tools_snapshot_path",
 ]

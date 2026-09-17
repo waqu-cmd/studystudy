@@ -63,10 +63,6 @@ class Chunk:
     text: str
     metadata: dict[str, Any]
 
-    def as_chroma(self) -> tuple[str, str, dict[str, Any]]:
-        """拆成 Chroma 需要的 (id, document, metadata) 三元组。"""
-        return self.chunk_id, self.text, self.metadata
-
 
 def _to_iso(value: Any) -> str:
     """统一成 ISO 日期字符串。

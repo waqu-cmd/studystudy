@@ -1,417 +1,427 @@
 # 企业知识库智能分析 Agent
 
 基于 **LangGraph + MCP + ChromaDB** 的 Supervisor 多 Agent 企业知识库问答系统。
-目标不是「能答」，而是**答得可核查**：每个结论必须能追溯到知识库中的具体片段，
-同一制度存在多版本时只采用当前有效的版本，且答案本身会被逐句核查、不通过则回退重检。
 
-当前进度：**阶段 5 / 8**（Supervisor 多 Agent 路由）。
+面向「企业内部制度问答」这一强时效、强忠实度场景，三条硬约束：
+
+1. **不编造** —— 检索无结果直接拒答，不调用模型生成。
+2. **不错版本** —— 时效过滤下推到向量库与 BM25 两侧，已过期版本零泄漏。
+3. **可自纠正** —— 生成后由核查节点逐条比对断言，无依据则改写检索词重检。
 
 ---
 
-## 架构
-
-### 问答图（LangGraph）
-
-下图由 `app/graph/builder.py::graph_mermaid()` 直接生成，是图结构的唯一事实来源：
+## 系统架构
 
 ```mermaid
-graph TD;
-	__start__([__start__]):::first
-	reset_turn(reset_turn)
-	supervisor(supervisor)
-	retriever(retriever)
-	synthesizer(synthesizer)
-	verifier(verifier)
-	__end__([__end__]):::last
-	__start__ --> reset_turn;
-	reset_turn --> supervisor;
-	supervisor -.-> retriever;
-	supervisor -.-> synthesizer;
-	retriever -.-> synthesizer;
-	retriever -.-> __end__;
-	synthesizer -.-> verifier;
-	synthesizer -.-> __end__;
-	verifier -.-> retriever;
-	verifier -.-> __end__;
+graph LR
+    START([START]) --> reset_turn
+    reset_turn --> supervisor{supervisor}
+    supervisor -->|direct| synthesizer
+    supervisor -->|Send × N<br/>子问题| retriever
+    retriever --> synthesizer
+    synthesizer --> verifier{verifier}
+    verifier -->|pass / 触顶| END([END])
+    verifier -->|fail & retry&lt;max| retriever
 ```
 
-| 节点 | 职责 | 关键实现 |
-|---|---|---|
-| `reset_turn` | 每轮入口清零累加字段（`events` / `retrieved_chunks` / `unsupported_claims` / `sub_queries`） | 挂 checkpointer 后累加字段会跨轮保留，必须显式清零；带 reducer 的通道用 `None` 清零 |
-| `supervisor` | LLM 驱动的路由与拆解：判走检索还是直接生成，复合问题拆成多个子问题 | 结构化输出走 `json_schema`；`decide_route` 规则函数退居兜底与**硬闸门** |
-| `retriever` | 混合检索（阶段 4 起改为 MCP 工具调用） | 只认 `search_query` 一个字段，既不感知自纠正循环，也不感知 fan-out |
-| `synthesizer` | 生成答案并绑定引用 | 引用按 `chunk_id` 确定性格式提取，模型编造的 id 被丢弃 |
-| `verifier` | 逐句核查忠实度，判失败则重组检索词准备重检 | 结构化输出走 `json_schema`；失败时 fail-open |
+- **单路**：`reset_turn → supervisor → retriever → synthesizer → verifier → END`
+- **并行**：supervisor 拆出 ≥2 个子问题时返回 `list[Send]`，并发进入 `retriever`，
+  落定后汇合到 `synthesizer`（无聚合节点，带 reducer 的通道即汇合点）。
+- **重检**：verifier 判 fail 时复用 `retriever`，仅改写 `search_query`。
 
-| 条件分支 | 判定 | 走向 |
-|---|---|---|
-| `supervisor → ?` | 子问题 ≥ 2（复合问题） | `list[Send]` → N 个 `retriever` **并发**，结果由 reducer 通道汇合 |
-| `supervisor → ?` | `route == "retrieve"` 且子问题 < 2 | `retriever` |
-| `supervisor → ?` | `route == "direct"`（寒暄/元问题） | `synthesizer`（无参考资料，禁止编造） |
-| `supervisor → ?` | `with_answer == false`（评估模式） | `retriever` |
-| `retriever → ?` | `with_answer == true` | `synthesizer` |
-| `retriever → ?` | `with_answer == false` | `__end__`（只测检索、不花 LLM 配额） |
-| `synthesizer → ?` | 有召回块且生成成功 | `verifier` |
-| `synthesizer → ?` | `direct` / 无召回块 / 生成失败 | `__end__`（无事实性断言可核查） |
-| `verifier → ?` | `verdict == "fail"` 且 `retry_count < MAX_RETRY` | `retriever`（**回退重检**；回退不走并发） |
-| `verifier → ?` | 其余 | `__end__` |
+**进程边界**：FastAPI 主进程不直连向量库，检索经 `MCPToolClient` 提交到后台事件循环
+线程，由长驻会话走 stdio 调用 `chroma_server` / `filesystem_server`
+（`search_server` 可选）。原因：Chroma 0.5.x 为 SQLite + hnswlib 本地文件，同目录多进程
+访问有锁争用风险。**MCP 启动失败不阻止服务启动**，`/health` 报 `degraded`，`/query`
+降级为「无参考资料」。
 
 ---
 
-## Supervisor 多 Agent 路由（阶段 5）
-
-阶段 5 把阶段 2 的规则 Router 升级为 **LLM 驱动的 Supervisor**，并让复合问题
-**并行检索**。**图结构一字未改** —— 节点集合与边与阶段 2 完全一致
-（`graph_mermaid()` 输出逐字相同），所有变化都发生在「节点内部」与「状态契约」两处。
-
-### 路由决策：LLM 为主，规则当闸门
-
-三层兜底逐层下沉：`结构化输出（json_schema）` → `文本 JSON 解析` → `阶段 2 的规则路由`。
-任何一层失败都退回下一层，因此**永远有一个确定的结论**，不存在「路由不出来」的中间态。
-
-| 层 | 作用 |
-|---|---|
-| 结构化输出 `json_schema` | 主路径：判 `intent`（`retrieve` / `direct`）+ 拆 `sub_queries` |
-| 文本 JSON 兜底 | 结构化通道调用失败时，让模型直接吐 JSON |
-| `decide_route` 规则 | 最终兜底，同时兼任下面这条硬闸门的判据 |
-
-**硬闸门是刻意不对称的**：
-
-- LLM 判 `direct`，但问题命中 `KB_HINTS` 业务关键词 → **强制改判 `retrieve`**。
-  宁可多跑一次检索（几十毫秒），也不能让制度类问题绕过知识库由模型自由发挥。
-- LLM 判 `retrieve` → **听 LLM**。规则里「长度 ≤3 字即寒暄」只是没有模型时的启发式，
-  拿它去否决模型会误杀「Q2 呢？」这类依赖多轮语境的真问题。
-
-`with_answer=false`（评估模式）时**完全不调 LLM**，直接走规则路由 —— 阶段 2 立下的
-「评估不消耗 LLM 配额」契约不能被阶段 5 破掉。
-
-### 并行检索：`Send` + reducer 通道
-
-`route_after_supervisor` 在子问题 ≥ 2 时返回 `list[Send]`，LangGraph 据此把**每个
-子问题**投递给一次独立的 `retriever` 执行；下游 `synthesizer` 只执行一次，
-并在 reducer 通道里看到全部并发分支的合并结果。
-
-**核心取舍：并发安全性做进了「状态契约」，而不是「节点逻辑」。** `retriever` 节点里
-没有任何并发特判，它照旧只返回「本分支的增量」；能否并发由通道的 reducer 决定：
-
-| 通道 | reducer | 语义 |
-|---|---|---|
-| `retrieved_chunks` | `append_chunks` | 按 `chunk_id` 去重合并；`None` = 清零 |
-| `events` / `unsupported_claims` / `sub_queries` | `append_or_reset` | 追加；`None` = 清零 |
-| `retrieval_attempts` / `retry_count` | `keep_max` | 取最大轮次（各支都报 1，合并后仍是 1） |
-| `error` | `merge_error` | 保留首个非空错误 |
-
-**为什么必须有 reducer**：LangGraph 对**无 reducer 的通道**在并行分支下会抛
-`InvalidUpdateError: At key 'X': Can receive only one value per step`。
-这是探针实测出来的 —— 最初只有 `error` 是裸 `str`，三个分支一起写就炸。
-
-`Send` 的另一个易错点：**payload 是整体替换而非合并**。分支只拥有被显式传入的字段，
-因此 `edges.build_fanout_payload` 必须把 `query` / `search_query` / `top_k` /
-`include_expired` / 已有 `retrieved_chunks` 等一并搬运，否则分支会以「空状态」进入、
-静默降级为「没有检索词」。
-
-跨支去重放在 reducer 而不是节点，是因为 **reducer 是所有分支唯一的汇聚点**：
-两条子问题完全可能命中同一个块（「Q2 返点比例」与「Q2 相比 Q1 的变化」都会召回
-Q2 政策正文），不在汇合处去重，同一份证据会以两份身份进入 prompt 与 `citations`。
-
-### 多轮会话：MemorySaver + 每轮清零
-
-挂上 `MemorySaver` 后 `thread_id` 即会话 id，同一会话第二轮能读到上一轮的 checkpoint。
-累加字段因此会跨轮保留（实测第二轮 `events` 会变成上一轮的两倍），`reset_turn` 在每轮
-入口把它们清零，且**必须用 `None` 而不是 `[]` / `0`** —— reducer 通道里 `None` 是
-「reset」信号，直接回退初始值；用空列表会被当成「追加一个空列表」，残留照旧。
-
-请求未带 `session_id` 时，服务端生成一个 uuid 作 thread_id，避免匿名请求互相串话。
-`MEMORY_ENABLED=false` 时图不挂 checkpointer，退回阶段 4 的无状态行为。
-
-### 并发暴露出的 MCP 启动竞态（本阶段最值钱的收获）
-
-阶段 4 的 `MCPToolClient` 用 `running` 判断「是否已启动」。而 `running` 依赖 `_loop`，
-`_loop` 是**后台线程内部创建**的 —— 握手完成前它一直是 `False`。阶段 4 只有单线程
-调用，这个缺陷不会显形；阶段 5 引入 fan-out 后，N 个检索分支同时落到惰性启动路径，
-每个分支都判定「尚未启动」，依次进入 `_start_lock` 把 `_tool_index` 清空并**另起一个
-事件循环**，`_pending` 计数随之错乱。真实链路的日志时间线：
+## 关键文件
 
 ```
-12:50:54  filesystem 已连接（list_docs / read_file 进路由表）
-12:50:54  fan-out 分支开始调用 search_documents   ← 尚未注册！
-12:50:57  chroma 才连接（search_documents 进路由表）
+app/
+├── main.py                    # FastAPI 入口：MCP 生命周期、路由挂载
+├── mcp_client.py              # MCP 客户端（长驻会话 + leader/follower 启动）
+├── core/                      # config.py 配置单例 · llm.py LLM/Embedding
+├── api/routes/                # health / ingest / query（含 SSE）
+├── graph/                     # state.py 状态契约 · builder.py · edges.py · nodes/×4
+├── mcp_servers/               # chroma / filesystem / search
+├── rag/                       # chunker · indexer · retriever（向量+BM25+RRF）· rrf
+└── schemas/                   # ingest / query 请求响应模型
+data/docs/                     # 知识库源文档（Markdown + YAML front-matter）
+data/chroma_db/                # Chroma 持久化目录（派生产物，可重建）
+eval/                          # golden_set.json（35 题）· metrics · judge · eval.py
+scripts/                       # seed_docs.py（批量导入）· run_eval.sh
+tests/                         # 8 个测试模块（226 用例）
 ```
-
-复合问题因此整体降级为「根据现有资料无法确认」。修法是显式的 **leader/follower**：
-`start()` 持锁期间的第一个调用者成为 leader 并真正启动，其余调用者只等**同一个**
-`_ready` 事件，绝不重入清理共享状态；同时新增 `ready` 属性（`running` **且** 握手
-已落定）作为「可以调用工具了」的唯一判据 —— 惰性兜底路径也因此从判 `running` 改为判
-`ready`。
-
-> 值得记下的是这个缺陷**由真实链路验证（而非单测）抓到**：单测里 retriever 注入替身，
-> 根本不会并发走到 MCP 启动路径。探针先行 → 落盘 → 真实组件复验，是本项目固定下来的三步。
-> 回归用例 `test_concurrent_start_is_not_reentrant` 用替身把「握手窗口」拉长后断言
-> 「后台线程只被启动一次」；该断言对旧实现必然失败（实测旧逻辑启动 3 个线程）。
-
-### 阶段 5 验收（真实链路，9/9）
-
-全部走真实组件：真实 LLM 路由与拆解、真实 MCP 子进程检索、真实 Chroma 语料、
-MemorySaver 真实挂载。
-
-| 验收项 | 结果 |
-|---|---|
-| 复合问题被拆解 | `sub_queries` = 2 条（Q1→Q2 变化 / 对华东区返点的影响） |
-| 多路结果被合并 | 两路各召回 10 块 → 去重合并后 11 块 |
-| 答案与引用绑定 | `verdict=pass`（该题语料只有 Q3 版，如实拒答亦为正确行为） |
-| 跨轮未污染 | 同 thread 第二轮 vs「同问题全新 thread」召回集合**逐一致**（对称差为空） |
-| 跨轮未累加 | 第二轮 10 块 ≤ `top_k`；若清零失效必然超标 |
-| 路由边界 | 寒暄 → `direct`；事实型问题 → `retrieve` 且真召回 |
-| 无节点级错误 | 五轮均无 `error` |
-
-> 「跨轮未污染」的判据设计过一次修正：v1 写成「两轮 chunk 无交集」是**错的** ——
-> 语料只有 3 篇文档，而两轮都在问同一套销售政策，命中重叠是必然的。正确做法是
-> **对照实验**：把同一追问放到全新 thread 再跑一遍，两轮召回集合必须一致
-> （检索是确定性的：embedding + BM25 + RRF 均无随机性）。判据写错会让人误以为产品有 bug。
-
----
-
-## MCP 工具层（阶段 4）
-
-**阶段 4 没有改动图结构** —— 这正是阶段 2 把流程图定型的价值：MCP 只替换了
-`retriever` 节点的内部实现，节点名、边、状态契约全部不变。
-
-```
-                  ┌──────────────── 主进程（推理层）─────────────────┐
-                  │  LangGraph：supervisor → retriever → …          │
-                  │                    │                            │
-                  │        app/mcp_client.py  MCPToolClient          │
-                  │        后台事件循环 + 每 Server 长驻会话           │
-                  └────────────────────┼────────────────────────────┘
-                                       │ JSON-RPC over stdio
-            ┌──────────────────────────┼──────────────────────────┐
-            ▼                          ▼                          ▼
-  chroma_server 子进程        filesystem_server 子进程     search_server 子进程
-  search_documents            list_docs / read_file        web_search（可选）
-  collection_stats
-```
-
-### 暴露的工具
-
-| Server | 工具 | 说明 |
-|---|---|---|
-| `chroma_server` | `search_documents(query, top_k, include_expired)` | 向量 + BM25 混合检索（RRF 融合）。**不实现任何算法**，只把 `HybridRetriever` 原样暴露 —— 剥离的是进程边界，不是逻辑，因此阶段 1 的 Hit@3 / MRR 结论对其依然成立 |
-| `chroma_server` | `collection_stats()` | 索引统计，供健康检查与启动探测 |
-| `filesystem_server` | `list_docs()` | 文档清单（含版本与时效元数据） |
-| `filesystem_server` | `read_file(filename)` | 单篇全文。**入参视为不可信输入**：先 `resolve()` 再校验是否落在 `DOCS_DIR` 内，可同时挡住 `../` 穿越、绝对路径越界与符号链接逃逸；后缀走白名单 |
-| `search_server` | `web_search(query, max_results)` | 可选。未配置 `SEARCH_API_BASE` 时返回**显式**错误，绝不返回空列表冒充「没搜到」 |
-
-启动时用 `list_tools()` 动态发现工具并建立「工具名 → Server」路由表，
-结果落盘到 `logs/mcp_tools.json` 供人工核查。
-
-### 连接模型：为什么是长驻会话
-
-同步的 `retriever` 节点要调用异步的 MCP 工具，实测比较了两条路：
-
-| 方案 | 每次调用耗时 |
-|---|---|
-| 每次调用新建 stdio 连接（spawn 子进程） | **~750 ms** |
-| 专用后台事件循环 + 每 Server 长驻会话 | **~4 ms** |
-
-差距约 **150 倍**，且自纠正循环一轮问答最多触发 3 次检索。因此采用后者：
-后台线程跑一个专用事件循环，每个 Server 一个长驻协程挂在 stop event 上，
-同步侧通过 `run_coroutine_threadsafe().result()` 调用。
-
-**跨进程的实际开销（实测）**：MCP 通道 337 ms vs 进程内直连 299 ms，**约 +38 ms**。
-因为两侧都必须调用一次 embedding 接口，该网络耗时占绝对主导，JSON-RPC 编解码
-与跨进程传输的占比很小 —— 这也说明「工具层解耦」的代价是可控的。
-
-### 五条硬约束（均为实测结论）
-
-1. **MCP Server 脚本不能写 `from __future__ import annotations`**。
-   mcp 1.9.2 的 `Tool.from_function` 对参数注解直接调用 `issubclass()`，
-   注解被延迟成字符串会抛 `TypeError: issubclass() arg 1 must be a class`。
-   该报错完全不指向真因（表现为「子进程启动即退出 + 客户端只看到 Connection closed」）。
-
-2. **MCP Server 不能向 stdout 输出**。stdio 传输下 stdout 是 JSON-RPC 独占通道，
-   一行 `print` 就会破坏握手。日志必须走 stderr（`setup_mcp_logging()`）。
-
-3. **工具函数内部不得执行「首次 import」** —— 本项目最隐蔽的一个坑。
-   实测：一个只在工具函数里 `importlib.import_module(...)` 的探针 Server，
-   该调用**永久挂起**（180 s 超时也不返回）；同一探针中纯返回、同步
-   `time.sleep(2)`、同步 HTTP 请求、stderr 日志**全部正常**。
-   机制是 import 需要获取全局 import lock，与事件循环线程互锁形成死锁。
-   表现极具误导性：**首次调用挂起、第二次起正常**，极易被误判为「首次连接慢」。
-   因此 Server 侧把 `app.rag.*` 全部 import 提到模块顶层，并在 `mcp.run()` 之前
-   用 `warmup()` 完成初始化 —— 那时还是单线程，不存在锁竞争。
-
-4. **`start()` 必须等全部 Server 落定才返回**。若第一个 Server 就绪即放行，
-   「启动后立即调用」会拿到「工具未注册」—— 实测就是这样丢掉了 filesystem 的
-   `list_docs` / `read_file`。用 `_pending` 计数实现。
-
-5. **`start()` 必须并发安全（阶段 5 新增）**。判「是否已启动」不能用 `running`：
-   它依赖后台线程内部创建的 `_loop`，握手完成前恒为 `False`，并发调用者会各自
-   重清路由表并另起事件循环，导致「工具未注册」的假象。实现为 leader/follower，
-   对外以 `ready` 作为「可调用」判据（详见「Supervisor 多 Agent 路由」一节）。
-
-### 降级行为（阶段 4 的验收点）
-
-Server 是独立进程，可能在运行中崩溃。因此：
-
-- **`start()` 永不抛异常**：任一 Server 失败只记录状态，服务照常启动。
-- **`call_tool` 永不抛异常**：失败信息放在 `MCPToolResult.error`，
-  调用方据 `ok` 标志区分「检索到 0 条」与「检索失败」。
-- **`retriever` 节点降级而非中断**：MCP 不可用时返回空增量 + 写入 `error`，
-  合成器拿不到块会走拒答分支 —— 整轮问答给出「根据现有资料无法确认」
-  而不是 500。
-- **节点内置惰性启动兜底**：评估脚本与「直接调用 `build_graph()`」的入口没有
-  FastAPI lifespan 来启动单例，节点会在首次检索时 `ensure_started()`。
-
-实测：把 `chroma_server` 指向不存在的模块后，`/health` 报 `degraded`
-（`checks: {"chroma": "error: McpError: Connection closed"}`），
-`/query` 返回 200 且回答为拒答，`filesystem_server` 的工具不受影响。
-
-### 两条通道可切换
-
-`MCP_ENABLED=false` 时检索退回进程内直连（阶段 3 行为），`/health` 的
-`retrieval_channel` 会显示 `in-process`。保留这条通道有三个用途：
-**可回归**（MCP 出问题一个开关退回）、**可测试**（单测注入替身，不必 spawn 子进程）、
-**可对比**（量化 MCP 引入的额外延迟）。
-
----
-
-## 自纠正循环（阶段 3）
-
-```
-生成 ──► 核查 ──┬─(pass)──────────► 输出
-                └─(fail)──► 重组检索词 ──► 回退重检 ──► 再生成 ──► 再核查
-```
-
-四个设计要点，都是实测驱动：
-
-1. **回退必须换检索词**。verifier 把检出的缺口断言重组成新 `search_query`
-   （原问题与缺口各占一半长度预算，总长上限 300 字）。沿用原问题只会召回同一批块，
-   回退退化成空转。retriever 对此毫无感知 —— 它只认 `search_query` 一个字段。
-2. **`retry_count` 记的是「实际已执行的回退次数」**。verifier 只提建议，
-   建议是否被采纳由 `edges.route_after_verifier` 按 `MAX_RETRY` 裁定，
-   递增在 retriever 里完成。否则被闸门拦下的建议也会计数，
-   `MAX_RETRY=0` 时会出现「回退 0 次却报 1 次」的自相矛盾。
-3. **核查失败 fail-open**。核查本身要调 LLM，它有失败的可能。此时放行当前答案
-   并留痕 —— 缺口都没识别出来，重检毫无方向，还会烧光回退配额。
-4. **触顶后如实输出 `verdict=fail`**，不伪装成通过。系统选择诚实输出，
-   由调用方决定是否采信。
-
-### 结构化输出的实测约束（langchain 0.3.63 + 百炼兼容端点）
-
-在选型前逐个实测了 `with_structured_output` 的三种 method：
-
-| method | 实测结果 |
-|---|---|
-| `json_schema` | ✅ 正确识别有依据 / 无依据断言，**本项目采用** |
-| `function_calling` | ⚠️ **静默返回空对象**：不抛异常，verdict 与 assertions 全为空 —— 看似成功实则未核查，最危险的一种失败 |
-| `json_mode` | ❌ 400：`'messages' must contain the word 'json'` |
-
-纯文本兜底路径下模型还可能输出 `verdict="partial"` 这类枚举外的值，
-因此 `normalize_verdict` 采用白名单归一 —— **非 pass 即 fail**。
-
-### 成本与边界（实测）
-
-- **延迟**：单次问答约 4.6~8.5 秒，含检索 + 生成 + 核查三次模型调用。
-  核查是纯增项，换来的是可量化的忠实度指标。
-- **误伤率**：真实问题（含时效陷阱题与寒暄）全部 `verdict=pass`、`retry=0` ——
-  正常路径没有被无谓回退。
-- **缺口去重只做标点归一**（`claim_key`）。实测模型多轮会把同一句断言多写一个逗号，
-  按字面比较会让重复项绕过差集。但若模型改变**切分粒度**（把两条断言合并为一条），
-  当前实现无法识别 —— 语义去重需要额外的模型调用或 embedding，代价高于收益，
-  故接受该边界。
 
 ---
 
 ## 快速开始
 
-```powershell
-conda activate kbagent
-cd E:\enterprise_agent
+### 1. 环境
 
-# 1. 配置：复制模板并填入密钥
-Copy-Item .env.example .env
+Python **>= 3.11**，一个 OpenAI 兼容的 LLM + Embedding 服务（默认阿里云百炼 DashScope）。
+无需 Docker、无需外部数据库。
 
-# 2. 索引示例文档（5 篇 → 20 块）
-python scripts/seed_docs.py
+### 2. 安装
 
-# 3. 启动服务（lifespan 会自动拉起 MCP Server 子进程）
-python -m uvicorn app.main:app --reload --port 8000
+```bash
+pip install -e ".[dev]"
 ```
 
-| 接口 | 方法 | 说明 |
-|---|---|---|
-| `/health` | GET | 存活、配置与**逐个 MCP Server 的实时连通状态** |
-| `/ingest` | POST | 按文件路径批量索引 |
-| `/ingest/stats` | POST | 索引统计 |
-| `/query` | POST | 知识库问答（同步；阶段 6 追加 SSE 流式） |
+> LangChain 生态耦合极紧，`pyproject.toml` 中「版本锚点」锁死了 `langchain-core`、
+> `langgraph-checkpoint`、`openai` 等间接依赖。升级任意一项前请先跑通全量测试。
 
-`/health` 返回整体状态：全部 Server 连通为 `ok`，任一失败为 `degraded`
-（进程仍活着、`/query` 仍可降级服务，故不报 unhealthy）。同时给出
-`retrieval_channel`（`mcp` / `in-process`）与 `mcp_tools`（动态发现的工具名）。
+### 3. 配置
 
-`/query` 支持的开关：`with_answer=false` 只检索不生成（评估检索指标用），
-`include_expired=true` 纳入已过期文档（仅作对照）。
-
-`/query` 的响应除了 `answer` / `citations` / `retrieved_chunks`，还暴露执行过程：
-
-| 字段 | 含义 |
-|---|---|
-| `route` / `route_reason` | 走检索还是直接生成，以及理由 |
-| `sub_queries` | 复合问题拆出的子问题列表；长度 ≥2 时表示本轮走了并行检索 |
-| `retrieval_attempts` | 实际检索轮次：1 表示首检即够，2 表示回退重检过一次 |
-| `verdict` | 核查结论 `pass` / `fail`；空串表示本轮未执行核查 |
-| `unsupported_claims` | 未能在召回块找到依据的断言 —— 忠实度风险的直接证据 |
-| `retry_count` | 已实际执行的回退次数，上限为 `MAX_RETRY` |
-
-### MCP 通道自检
-
-```powershell
-# 单独启动一个 Server，验证它能正常握手（Ctrl+C 退出）
-python -m app.mcp_servers.chroma_server
+```bash
+cp .env.example .env    # 至少填写 LLM_API_KEY
 ```
+
+```dotenv
+LLM_API_KEY=sk-your-key-here
+LLM_MODEL=deepseek-v4-flash
+```
+
+`EMBEDDING_API_KEY` 留空时自动复用 `LLM_API_KEY`。字段名契约：`config.py` 字段名（小写）
+与 `.env` 变量名（大写）严格一一对应，改字段名等于改 `.env`。
+
+### 4. 索引
+
+```bash
+python scripts/seed_docs.py                    # 索引 data/docs/ 全部文件
+python scripts/seed_docs.py --skip-unchanged   # 跳过内容 hash 未变的文档
+python scripts/seed_docs.py --only <doc_id>    # 调试单篇
+python scripts/seed_docs.py --reset            # 清空重建（需输入 yes 确认）
+```
+
+支持 `.md` / `.markdown` / `.txt` / `.pdf`。
+
+### 5. 启动与验证
+
+```bash
+uvicorn app.main:app --reload --port 8000
+
+curl http://127.0.0.1:8000/health
+curl -X POST http://127.0.0.1:8000/query \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"2026年第三季度新客户签约的返点比例是多少？"}'
+```
+
+交互式文档：<http://127.0.0.1:8000/docs>
 
 ---
 
-## 目录结构
+## API
 
-```
-app/
-├── api/            FastAPI 路由与依赖注入
-├── core/           配置（config）、LLM/Embedding 单例（llm）、日志（logging）
-├── graph/          LangGraph 编排层：state / nodes / edges / builder
-├── mcp_servers/    MCP Server：chroma / filesystem / search（各自独立进程）
-├── mcp_client.py   MCPToolClient：后台事件循环 + 长驻会话 + 动态发现
-├── rag/            切块、索引、混合检索、RRF 融合
-└── schemas/        Pydantic 请求 / 响应模型
-data/docs/          知识库 Markdown（YAML front-matter 承载版本与时效）
-eval/               golden set 与评估脚本（阶段 7）
-```
+| 端点 | 说明 |
+| --- | --- |
+| `GET /` | 服务自描述，返回全部端点路径 |
+| `GET /health` | 实时 ping 每个 MCP Server（每次真实调 `list_tools()`），非读启动缓存 |
+| `POST /ingest` | 文档上传与索引。`files` 留空即索引 `DOCS_DIR` 全部；`force` 默认 `true`；`reset` 清空 collection（危险） |
+| `GET /ingest/stats` | 块数、文档数与逐文档清单（含版本、失效日期、块数） |
+| `POST /query` | 同步问答，返回完整 JSON |
+| `POST /query/stream` | SSE 流式，与 `/query` 共用请求体、图与终态映射函数 |
 
-## 文档约定
+`/health` 的 `status` 取 `ok` / `degraded`（**非** `unhealthy`）—— 只要进程活着、
+`/query` 仍能降级对外服务，整体就不算不健康。
 
-每篇知识库文档顶部用 YAML front-matter 声明元数据，由 `app/rag/chunker.py` 解析：
+`/query` 请求字段：
 
-```yaml
+| 字段 | 类型 | 默认 | 说明 |
+| --- | --- | --- | --- |
+| `query` | `string` | 必填 | 1~2000 字 |
+| `session_id` | `string?` | `null` | 提供时跨轮保留状态；不提供则退化为一次性匿名会话，不与其它匿名请求串状态 |
+| `top_k` | `int?` | `null` | 覆盖 `TOP_K`，1~50 |
+| `include_expired` | `bool` | `false` | 是否纳入已过期文档 |
+| `with_answer` | `bool` | `true` | 置 `false` 只检索不生成，用于零 LLM 配额地评估检索质量 |
+
+响应关键字段：`answer`、`citations`、`retrieved_chunks`、`route` / `route_reason`、
+`sub_queries`、`retrieval_attempts`、`verdict`、`unsupported_claims`、`retry_count`、`error`。
+
+两类「失败」刻意区分：**`answer` 空 + `error` 有值** = 系统故障；
+**`answer` 为拒答文案 + `error` 空** = 正常业务结论。
+
+SSE 帧类型：
+
+| 事件 | `data` | 说明 |
+| --- | --- | --- |
+| `stage` | `{seq, stage, node, msg, ts, elapsed_ms}` | 逐节点推送，`stage` ∈ `routing` / `retrieving` / `synthesizing` / `verifying` |
+| `error` | `{node, msg}` | 图级异常，之后仍会补一帧 `final` |
+| `final` | 与 `QueryResponse` 同构 | 收尾帧 |
+
+> `stage` 用稳定的对外词汇而非图内部节点名，节点重命名不影响调用方。并行 fan-out 下
+> `retrieving` 会出 N 帧，但同一超步内各支是一起到达的（LangGraph 超步落定后统一发出）。
+
 ---
-doc_id: sales_policy_2026q3
-doc_title: 2026Q3 销售政策
-version: 2026Q3
-effective_date: 2026-07-01
-expire_date: 2026-09-30      # 省略表示长期有效，入库时写哨兵 9999-12-31
+
+## 配置要点
+
+完整列表见 `.env.example`。
+
+**LLM / Embedding**
+
+| 变量 | 默认 | 说明 |
+| --- | --- | --- |
+| `LLM_API_KEY` | — | **必填** |
+| `LLM_MODEL` | `deepseek-v4-flash` | 推理、路由、核查、生成 |
+| `LLM_TEMPERATURE` | `0.0` | 路由与核查是判断题 |
+| `EMBEDDING_MODEL` | `text-embedding-v4` | 1024 维 |
+| `EMBEDDING_BATCH_SIZE` | `10` | text-embedding-v4 单请求上限，超过直接 400，必须分批 |
+
+**检索 / 向量库**
+
+| 变量 | 默认 | 说明 |
+| --- | --- | --- |
+| `CHROMA_PATH` | `./data/chroma_db` | 相对路径一律相对项目根解析 |
+| `CHROMA_COLLECTION` | `enterprise_kb` | 3~63 字符，仅字母数字与 `_`/`-` |
+| `TOP_K` | `10` | 每轮检索条数上限 |
+| `RRF_K` | `60` | RRF 平滑常数 |
+| `DOCS_DIR` | `./data/docs` | 默认文档库目录 |
+
+**Agent 自纠正**
+
+| 变量 | 默认 | 说明 |
+| --- | --- | --- |
+| `MAX_RETRY` | `3` | 回退重检上限，置 `0` 完全禁用 |
+| `VERIFIER_MODEL` | `qwen3.6-flash` | 核查专用模型，留空复用 `LLM_MODEL` |
+| `MEMORY_ENABLED` | `true` | `false` 则退回无状态 |
+
+**MCP / 评估**
+
+| 变量 | 默认 | 说明 |
+| --- | --- | --- |
+| `MCP_ENABLED` | `true` | 置 `false` 退回进程内直连，用于 A/B 对比与故障二分 |
+| `MCP_SERVERS` | `chroma,filesystem` | `search` 需外部凭据，默认不启动 |
+| `MCP_TIMEOUT` / `MCP_START_TIMEOUT` | `30` / `60` | 单次调用 / 全部 Server 握手总超时 |
+| `SEARCH_API_BASE` / `SEARCH_API_KEY` | 空 | 未配置时 `web_search` 返回**显式错误**，不返回空列表冒充「没搜到」 |
+| `JUDGE_MODEL` | `deepseek-v4-pro` | LLM-as-judge，留空复用 `LLM_MODEL` |
+
+---
+
+## 文档与切块约定
+
+知识库文档为 **Markdown + YAML front-matter**：
+
+```markdown
+---
+doc_id: sales_policy_2026q4
+doc_title: 2026Q4 销售政策
+version: 2026Q4
+effective_date: 2026-09-17
+expire_date: 2026-12-31
 source: confluence
 ---
 ```
 
-## 测试
+| 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| `doc_id` | 是（可由文件名推导） | 文档唯一标识 |
+| `version` | **是** | 参与「版本准确率」指标 |
+| `effective_date` | **是** | 生效日期 |
+| `expire_date` | 否 | 缺省 `9999-12-31`（长期有效哨兵） |
+| `doc_title` / `source` | 否 | 缺省取 `doc_id` / `local` |
 
-```powershell
-python -m pytest
+**切块**：解析 front-matter → 移除 H1 → 按 H2 切分（标题写入 `metadata["heading"]`）
+→ 超 `MAX_CHARS=800` 先按 H3 再切，仍超长则滑窗切分（`OVERLAP=80`）。
+`chunk_id = f"{doc_id}_p{index}"` 确定性生成，写入用 `upsert`；因块数变少时旧块会残留，
+每次写入**先 `delete(where={"doc_id": ...})` 再 upsert**。
+
+**日期写入两份**：ChromaDB 0.5.x 的 `where` 范围运算符（`$gte` / `$lte`）只接受
+int / float，传 ISO 字符串会抛 `ValueError`。因此 `effective_date` / `expire_date`
+存 ISO 字符串用于展示与比对，`effective_ord` / `expire_ord` 存 `YYYYMMDD` 整数用于过滤。
+**所有过滤一律走 `*_ord` 字段。**
+
+> BM25 也要做时效过滤。BM25 在本地内存算、无下推能力，因此构建索引时就按 `expire_ord`
+> 过滤语料。若只过滤向量一路，已过期的历史版本会仅从稀疏一路混进结果集，直接导致版本
+> 准确率指标失真。
+
+**PDF** 无法携带 front-matter，索引器用「文件名 + 修改日期」合成默认元数据；
+扫描件（未抽出文本）明确报错提示需先做 OCR。
+
+---
+
+## 评估体系
+
+```bash
+python -m eval.eval --retrieval-only --contrast   # 纯检索档，零 LLM 配额，可进 CI
+python -m eval.eval --compare                      # 全量档：检索 + 生成 + judge
+scripts/run_eval.sh [quick|full|all]               # 封装脚本
 ```
 
-167 项用例。核心逻辑全部使用注入替身（不联网、不访问 Chroma）；
-`tests/test_mcp_servers.py` 单独分四层：纯函数、工具函数、端到端、并发启动 ——
-端到端层真实 spawn 一个 `filesystem_server` 子进程，验证「动态发现 → 调用 →
-结果解析 → 健康检查 → 降级」整条链路（选 filesystem 是因为它不触发 embedding
-网络请求）；并发启动层用替身把「握手窗口」拉长，复现阶段 5 fan-out 暴露的启动竞态。
+> 脚本默认用 `D:/miniconda3/envs/kbagent/python.exe`，可用 `PY=/path/to/python` 覆盖。
+> 裸 `python` 会命中系统解释器，那里没装依赖。
 
-> 待补（阶段 8）：评估结果表、`make run/test/eval/seed` 说明、架构决策记录。
+**必须分两档**：检索质量与生成质量可独立退化（换 embedding 只影响前者，改 prompt 只影响
+后者），混在一档里一旦指标掉了无法归因。
+
+`eval/golden_set.json` 共 **35 题** = 30 有标答 + 5 陷阱题。陷阱题考察时效与版本区分，
+正确行为是**拒答**；其 `relevant_chunk_ids` 为空数组，Hit@3 记 `None` 而非 0
+（把不适用算成 0 会拖垮均值并掩盖真实退化）。
+
+**指标**：检索类含 `Hit@3`、`MRR`、`版本准确率`、`过期版本泄漏`（启用过滤时必须恒为 0，
+硬不变量）；生成类含 `拒答率(严格/纯文本/judge 语义)`、`忠实度`、`引用准确率`。
+拒答率三轨并报，真值被上下界夹住，背离的题进入 `refusal_diagnostics` 争议清单。
+
+**最新结果**（检索档 2026-09-17 采集；生成档仍为 2026-09-16 的扩容前记录，待重跑）：
+
+| 指标 | 值 |
+| --- | --- |
+| Hit@3 / MRR / 版本准确率 | **1.0000** / **0.9500** / **0.9333**（n=30） |
+| 过期版本泄漏 | **0** 块 / 0 题 |
+| 拒答率（judge 语义） | **1.00**（n=5，扩容前语料） |
+| 忠实度 / 引用准确率 | **1.00** / **1.00**（扩容前语料） |
+| 无依据断言总数 | 0（扩容前语料） |
+
+语料：30 篇文档 / 144 块，其中有效 128 块、过期 16 块（过期版本：`2025`、`2026Q1`、`2026Q2`、`2026Q3`）。
+
+**指标回落与归因**：语料由 5 篇扩至 29 篇后，MRR 由 0.9833 降至 0.9500、版本准确率由 1.00 降至
+0.9333。逐题定位确认退化只出现在 `q3` 与 `n30`，成因同一：新增的
+`fund_payment_approval_policy`「审批权限」小节与这两题的提问形态高度同构（都是一串按金额
+分档的审批阈值）。这不是回归缺陷，而是原 5 篇语料无法暴露的干扰项 —— 原满分有相当程度来自
+语料规模过小。两项仍在护栏内（`mrr ≥ 0.90`、`version_accuracy ≥ 0.90`），余量 0.05 与 0.0333。
+
+**季度滚动（2026-09-17）**：原 `expires_on=2026-09-30` 的窗口在 13 天后会让全部销售类题失效，
+故新增 `sales_policy_2026q4` 并把 10 道题迁至 `2026Q4`。
+
+首轮迁移把 Q3 留在有效集里，实测**版本准确率跌至 0.4000、MRR 0.6583**：6/10 题的 top-1 落在
+Q3 的同名小节上。根因不是参数问题 —— 两份政策多数句子逐字相同、仅数值不同，检索器没有任何
+依据偏向后发布者。改为让 Q3 与 Q4 的有效期**首尾相接而不重叠**后，指标恢复至与滚动前完全持平。
+该约束已写进 `validity_window.rollover_note`，下一次滚动到 2027Q1 时必须沿用。
+
+**时效过滤的独立贡献**（同题同算法，只切换 `expire_ord` 过滤）：
+
+| 指标 | 启用过滤 | 关闭过滤 |
+| --- | --- | --- |
+| Hit@3 | **1.0000** | 0.8667 |
+| MRR | **0.9500** | 0.7954 |
+| 版本准确率 | **0.9333** | 0.7333 |
+| 过期版本泄漏 | **0** 块 / 0 题 | **82** 块 / 17 题 |
+
+关闭过滤后 9 题的 top-1 直接落到过期版本（`q1`→Q1、`q2`/`n07`→Q2、`n09`/`n11`→Q1、`n10`→Q3，
+三道陷阱题 `t1`-`t3` 更是全部命中 Q3，即典型的「就近作答」）。滚动让这一步的对照比之前更硬：
+Q3 与 Q4 正文几乎逐字相同，语义相似度对两者不可分，**只有元数据过滤能区分** —— 这直接证明
+该过滤不是过度设计。
+
+**回归护栏** `tests/test_regression.py`：离线可执行（不跑图、不联网、不访问 Chroma），
+断言 `FLOORS` 指标下限、**时间窗双向守护**（正常题引用的文档未过期 + 陷阱题依赖的文档
+确实过期）、以及 golden set 中每个 `relevant_chunk_id` 存在于现场语料。
+
+---
+
+## 测试
+
+```bash
+pytest                                  # 全量
+pytest tests/test_chunker.py tests/test_rrf.py tests/test_eval.py   # 不依赖外网的纯函数用例
+```
+
+`asyncio_mode = "auto"`，`testpaths = ["tests"]`。8 个模块：`test_chunker`、`test_rrf`、
+`test_config`、`test_eval`、`test_graph_nodes`、`test_mcp_servers`、`test_api`、
+`test_regression`。共 **226 个用例**。
+
+> 图节点全部支持注入替身（`llm` / `supervisor_llm` / `verifier_llm` / `retriever` /
+> `mcp` / `max_retry` / `checkpointer`），因此全部分支含降级路径都能在不打网络、
+> 不 spawn 子进程的前提下覆盖。生产路径一律传 `None`，节点内部取进程内单例。
+
+---
+
+## 关键设计取舍
+
+- **`retriever` 不感知自纠正循环**：首检与补检的差别只有检索词，而检索词由 `search_query`
+  承载，故回退只需复用同一节点。`Send` 并行分派对节点同样透明 —— 它只认一个字段。
+  收益：新增能力只改状态契约与路由函数，节点实现几乎零改动。
+- **`retry_count` 在 `retriever` 递增而非 `verifier`**：该字段随响应暴露，语义必须是
+  「实际已执行的回退次数」。verifier 只提建议，是否采纳由 `edges.route_after_verifier`
+  按 `max_retry` 裁定；在 verifier 递增会导致 `max_retry=0` 时出现「回退 0 次却记 1 次」。
+  另：路由函数必须是纯函数 —— 实测条件边在 fan-out 时每个分支各被调用一次。
+- **并行分支必须写 reducer 通道**：实测 langgraph 0.2.60 下 N 个分支同写普通通道会抛
+  `InvalidUpdateError`。故 `retrieval_attempts` / `retry_count` / `error` 升级为 reducer
+  通道（取最大轮次、保留首个错误）。把「能不能并发」从节点逻辑挪进状态契约。
+- **MCP 客户端长驻会话**：每次新建 stdio 连接 ~750 ms，长驻会话 ~4 ms，差距约 **150 倍**。
+  主线程经 `run_coroutine_threadsafe(...).result(timeout)` 提交，后台线程跑专用事件循环。
+- **`start()` 用显式 leader/follower**：`Send` fan-out 后 N 个分支同时落到惰性启动路径，
+  而「是否已启动」不能用 `running` 判定（`running` 依赖后台线程创建的 `_loop`，握手完成前
+  恒为 `False`），旧实现下并发调用者会各自重清状态、`_pending` 计数错乱，导致复合问题
+  整体降级。修法：持锁期间首个调用者为 leader 真正启动，其余只等同一个 `_ready`；
+  对外以 `ready`（`running` 且握手落定）作为唯一判据。
+
+### MCP Server 四条硬约束
+
+修改 `app/mcp_servers/*.py` 前**必须**先读对应模块 docstring：
+
+1. **禁止 `from __future__ import annotations`** —— mcp 1.9.2 的 `Tool.from_function` 对
+   注解直接调 `issubclass()`，注解被延迟成字符串会抛 `TypeError`，报错完全不指向真因，
+   表现为「子进程启动即退出 + Connection closed」。
+2. **禁止向 stdout 输出** —— stdio 下 stdout 被 JSON-RPC 独占，一行 `print` 即破坏握手。
+   Server 进程不做任何日志或调试输出（本项目已整体移除日志链路）。
+3. **工具函数内部不得执行「首次 import」** —— 实测会因全局 import lock 与事件循环线程
+   互锁而**永久挂起**。所有 `app.rag.*` 的 import 必须在模块顶层，重初始化放 `warmup()`。
+4. **检索器必须是模块级单例** —— Server 进程长驻，单例让 Chroma 连接与 BM25 语料缓存
+   跨调用复用；每调用重建会每次多付数百毫秒。
+
+---
+
+## 已知边界
+
+**时间敏感性**：`data/docs/` 的销售政策按季度滚动。当前 `sales_policy_2026q4` **有效期至
+2026-12-31**，之后销售类题目标答不可检索，`tests/test_regression.py` 会直接失败并给出提示。
+滚动步骤已固化在 `golden_set.json` 的 `validity_window.rollover_note`：新增下一季度政策文档 →
+迁移相关题目的 `relevant_chunk_ids` 与 `required_doc_versions` → 同步 `corpus` 计数，且
+**新版本的有效期必须与上一版首尾相接而不重叠** —— 2026-09-17 那次滚动踩过这个坑：两个季度的
+正文几乎逐字相同，共存时版本准确率会掉到 0.40。
+
+**与蓝图的偏差**：`POST /query` 保持 JSON 并另增 `/query/stream`（蓝图要求 `/query` 本身
+改为 SSE）。理由：评估脚本与 `with_answer=false` 的检索评测依赖一次性拿到完整 JSON。
+两端点共用同一个 `_build_response`，终态映射只有一份实现，两种表示不可能漂移。
+
+| 运行期边界 | 现状 | 上线前需要 |
+| --- | --- | --- |
+| 会话持久化 | `MemorySaver` 仅存进程内存，重启即清空 | 换 `SqliteSaver` / `PostgresSaver` |
+| 会话内存回收 | 不淘汰旧线程，长跑进程持续占用内存 | 按 session 加 TTL 清理 |
+| 多副本部署 | checkpointer 为进程级单例，副本间会话不共享 | 换共享存储型 checkpointer |
+| 向量库并发 | Chroma 0.5.x 本地文件，同目录多进程有锁争用风险 | 单副本部署，或换服务化向量库 |
+| 外部搜索 | 凭据未配置，`web_search` 显式返回「未启用」 | 配置外部检索服务凭据 |
+| 语料规模 | 30 篇 / 144 块（有效 128、过期 16）；`MAX_CHARS=800` 原按 5 篇语料推算 | 复核 top_k 召回内容对 prompt 预算的占用 |
+
+**刻意不做流量追踪**：`config.py` 启动时强制摘除 LangSmith 相关环境变量（共 9 个）。
+原因是 `langchain-core` 直接读 `os.environ` 而非本项目 settings —— 若机器上因其它项目
+留有 `LANGCHAIN_TRACING_V2=true`，LangChain 会把每次图执行（**含检索到的文档正文与用户
+原始问题**）上传，既是数据外泄面，也给每次调用叠加同步网络开销。
+
+---
+
+## 排错
+
+| 现象 | 处理 |
+| --- | --- |
+| MCP 未就绪、检索降级 | 查 `/health` 的 `checks` 与 `mcp_tools` → 确认以**项目根**为 cwd 启动 → 确认 `sys.executable` 环境含依赖 → 临时 `MCP_ENABLED=false` 二分定位 |
+| `Embedding 维度不符` | Chroma 维度首次写入即锁定。换过 `EMBEDDING_MODEL` 必须 `rm -rf data/chroma_db && python scripts/seed_docs.py` |
+| Embedding 请求 400 | 查 `EMBEDDING_BATCH_SIZE` 是否 > 10、模型名与 `EMBEDDING_DIM` 是否正确 |
+| 业务问题被判 `direct` | supervisor 有硬闸门：LLM 判 direct 但规则层命中 `KB_HINTS` 会强制改判 retrieve。应扩充 `META_PATTERNS` / 调整 `KB_HINTS`，不要放开闸门 |
+| `invoke({})` 报 `InvalidUpdateError` | 空字典让 `__start__` 无通道可写。统一用 `initial_state(...)` 构造入参 |
+
+---
+
+## 版本锚点
+
+LangChain 生态耦合极紧，以下间接依赖在 `pyproject.toml` 中锁死：
+
+| 包 | 版本 | 锁定原因 |
+| --- | --- | --- |
+| `langgraph` | 0.2.60 | `Send` 语义、`astream` stream_mode 行为基准 |
+| `langchain-core` | 0.3.63 | 结构化输出与消息协议基准 |
+| `langgraph-checkpoint` | 2.1.2 | `MemorySaver` 跨轮保留行为 |
+| `chromadb` | 0.5.23 | `hnsw:space` 与 `where` 操作数类型约束 |
+| `mcp` | 1.9.2 | 四条硬约束均由该版本实测得出 |
+| `openai` | 1.109.1 | Embedding 分批与 `dimensions` 参数 |
+| `numpy` | 1.26.4 | 与 `chroma-hnswlib` / `onnxruntime` 的 ABI 兼容 |
+| `starlette` | `>=0.40,<0.42` | FastAPI 0.115.6 的 SSE 响应行为 |
+
+---
+
+## 许可
+
+个人项目

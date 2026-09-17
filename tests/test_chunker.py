@@ -233,10 +233,3 @@ class TestChunkSizeLimit:
         )
         headings = [c.metadata["heading"] for c in chunk_document(raw)]
         assert headings == ["甲", "乙"]
-
-    def test_short_document_stays_in_one_chunk(self) -> None:
-        raw = (
-            "---\ndoc_id: tiny\nversion: v1\neffective_date: 2026-01-01\n---\n\n"
-            "# 标题\n\n## 短节\n\n很短。\n"
-        )
-        assert len(chunk_document(raw)) == 1

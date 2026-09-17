@@ -37,7 +37,6 @@ from rank_bm25 import BM25Okapi
 
 from app.core.config import settings
 from app.core.llm import embed_query
-from app.core.logging import logger
 from app.rag.chunker import NO_EXPIRE_ORD, date_to_ord
 from app.rag.indexer import get_collection
 from app.rag.rrf import DEFAULT_K, ranks_of, rrf_fuse
@@ -77,12 +76,6 @@ class Corpus:
     bm25_all: BM25Okapi | None
     bm25_active: BM25Okapi | None
     active_positions: list[int]
-
-    def position_of(self, chunk_id: str) -> int | None:
-        try:
-            return self.ids.index(chunk_id)
-        except ValueError:
-            return None
 
 
 _corpus_cache: dict[str, tuple[int, Corpus]] = {}
@@ -129,12 +122,6 @@ def load_corpus(collection: Any | None = None) -> Corpus:
         active_positions=active_positions,
     )
     _corpus_cache[name] = (count, corpus)
-    logger.debug(
-        "语料缓存已重建 | collection={} | chunks={} | active={}",
-        name,
-        len(ids),
-        len(active_positions),
-    )
     return corpus
 
 
@@ -181,7 +168,6 @@ class HybridRetriever:
 
         corpus = load_corpus(self.collection)
         if not corpus.ids:
-            logger.warning("collection 为空，检索无结果 | collection={}", self.collection.name)
             return []
 
         vector_ranking, distance_by_id = self._vector_search(text, limit, allow_expired)
@@ -215,18 +201,7 @@ class HybridRetriever:
                 )
             )
 
-        logger.debug(
-            "检索完成 | query={!r} | vector={} | bm25={} | fused={}",
-            text[:30],
-            len(vector_ranking),
-            len(bm25_ranking),
-            len(hits),
-        )
         return hits
-
-    def search_chunk_ids(self, query: str, *, top_k: int | None = None) -> list[str]:
-        """只返回 chunk_id 有序列表，供评估脚本计算 Hit@K / MRR。"""
-        return [hit.chunk_id for hit in self.search(query, top_k=top_k)]
 
     # ---------------- 内部实现 ----------------
 

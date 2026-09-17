@@ -1,19 +1,10 @@
-"""POST /ingest —— 文档上传与索引（阶段 1）。
-
-同步接口：内部是阻塞 IO（读文件、Embedding HTTP、Chroma 写），
-因此路由函数用 def 而非 async def，由 FastAPI 自动调度到线程池，
-避免阻塞事件循环。
-
-files 留空时默认索引 .env 中 DOCS_DIR 指向目录下的全部受支持文件 ——
-这样 /ingest 可以直接当作「重建知识库」按钮使用。
-"""
+"""POST /ingest —— 文档上传与索引。"""
 
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
 from app.api.deps import get_indexer
-from app.core.logging import logger
 from app.rag.indexer import Indexer
 from app.schemas.ingest import FileIngestResult, IngestRequest, IngestResponse
 
@@ -26,7 +17,6 @@ def ingest(
     indexer: Indexer = Depends(get_indexer),
 ) -> IngestResponse:
     if request.reset:
-        logger.warning("收到 reset 请求，将清空 collection 后重建")
         indexer.reset()
 
     if request.files:
@@ -51,14 +41,6 @@ def ingest(
     skipped = sum(1 for r in results if r.status == "skipped")
     failed = sum(1 for r in results if r.status == "failed")
 
-    logger.info(
-        "ingest 完成 | files={} | indexed={} | skipped={} | failed={} | collection={}",
-        len(results),
-        indexed,
-        skipped,
-        failed,
-        indexer.count(),
-    )
 
     return IngestResponse(
         collection=indexer.collection_name,
@@ -74,7 +56,6 @@ def ingest(
 
 @router.get("/ingest/stats", summary="查看索引现状")
 def ingest_stats(indexer: Indexer = Depends(get_indexer)) -> dict[str, object]:
-    """返回 collection 内的块数与文档清单，便于确认索引是否生效。"""
     from app.rag.retriever import load_corpus
 
     corpus = load_corpus(indexer.collection)

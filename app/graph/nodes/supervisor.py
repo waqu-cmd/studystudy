@@ -7,7 +7,7 @@
 1. ``route``：``retrieve``（要走知识库）或 ``direct``（知识库里没有答案可言）。
 2. ``sub_queries``：拆解出的子问题。长度 ≥2 时由 ``edges.route_after_supervisor``
    用 ``Send`` 并行分发到 retriever，每个子问题一路。
-3. ``route_reason``：人类可读的理由，直接进日志与响应。
+3. ``route_reason``：人类可读的理由，直接进响应。
 
 三层兜底，逐层下沉
 ------------------
@@ -52,7 +52,6 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
 from app.core.llm import get_llm
-from app.core.logging import logger
 from app.graph.nodes.synthesizer import content_to_text, parse_json_object
 from app.graph.state import (
     NODE_SUPERVISOR,
@@ -235,7 +234,7 @@ def decide_route(query: str) -> tuple[str, str]:
     规则 2 优先于规则 3 是刻意的：``"你好，请问差旅报销上限是多少"`` 同时命中两者，
     必须走检索，否则会把一个真业务问题当成寒暄放行。
 
-    抽成纯函数（不读 state、不写日志）是为了让
+    抽成纯函数（不读 state、不写状态）是为了让
     ``tests/test_graph_nodes.py::test_supervisor_routing`` 能直接对决策表
     做表驱动断言，不必构造整张图。
     """
@@ -331,8 +330,7 @@ def _structured_runner(engine: Any) -> Callable[..., Any] | None:
         return None
     try:
         return builder(SupervisorDecision, method=SUPERVISOR_METHOD)
-    except Exception as exc:  # noqa: BLE001 - 老版本 langchain 不认 method 参数
-        logger.warning("结构化路由通道不可用，将回退到文本 JSON 解析 | {}", exc)
+    except Exception:  # noqa: BLE001 - 老版本 langchain 不认 method 参数
         return None
 
 
@@ -364,10 +362,8 @@ def _decide_with_llm(
                 clean_sub_queries(_field(result, "sub_queries")),
                 str(_field(result, "reason") or ""),
             )
-        except Exception as exc:  # noqa: BLE001 - 结构化通道失败不应放弃路由
-            logger.warning(
-                "结构化路由调用失败，回退到文本 JSON 解析 | {}", type(exc).__name__
-            )
+        except Exception:  # noqa: BLE001 - 结构化通道失败不应放弃路由，落到底部文本解析
+            pass
 
     # 兜底：让模型直接吐 JSON
     try:
@@ -382,15 +378,11 @@ def _decide_with_llm(
                 ),
             ]
         )
-    except Exception as exc:  # noqa: BLE001 - 模型不可用时交给规则路由
-        logger.warning(
-            "supervisor 模型调用失败，回退到规则路由 | {}", type(exc).__name__
-        )
+    except Exception:  # noqa: BLE001 - 模型不可用时交给规则路由
         return None
 
     payload = parse_json_object(content_to_text(getattr(reply, "content", reply)))
     if payload is None:
-        logger.info("supervisor 响应不是合法 JSON，回退到规则路由")
         return None
 
     return (
@@ -410,7 +402,6 @@ def supervisor_node(state: GraphState, *, llm: Any | None = None) -> dict:
 
     # 空输入连 LLM 都不必调用：没有内容可供检索，也没有可拆解的诉求
     if not text:
-        logger.info("supervisor | route=direct | reason=问题为空")
         return _payload(text, ROUTE_DIRECT, [], "问题为空，无内容可检索")
 
     rule_route, rule_reason = decide_route(text)
@@ -427,19 +418,13 @@ def supervisor_node(state: GraphState, *, llm: Any | None = None) -> dict:
         decision = _decide_with_llm(engine, text)
         if decision is not None:
             route, sub_queries, reason = decision
-    else:
-        # 评估模式：保住「不消耗 LLM 配额」的契约，详见模块 docstring
-        logger.debug("评估模式：supervisor 走规则路由，不调用 LLM")
+    # else：评估模式直接落到规则路由，保住「不消耗 LLM 配额」的契约，详见模块 docstring
 
     if route is None:
         route, sub_queries, reason = rule_route, [], rule_reason
 
     # ---------------- 硬闸门：业务问题不得被判为 direct ----------------
     if route == ROUTE_DIRECT and rule_route == ROUTE_RETRIEVE:
-        logger.warning(
-            "supervisor 判 direct 但命中业务关键词，已强制改判 retrieve | query={!r}",
-            text[:30],
-        )
         route = ROUTE_RETRIEVE
         reason = f"{reason}（已拦截：{rule_reason}）"
 
@@ -470,13 +455,6 @@ def _payload(
     else:
         detail = ""
 
-    logger.info(
-        "supervisor | route={} | sub_queries={} | reason={} | query={!r}",
-        route,
-        len(sub_queries),
-        reason,
-        text[:30],
-    )
 
     return {
         "query": text,

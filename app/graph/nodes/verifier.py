@@ -50,7 +50,6 @@ from pydantic import BaseModel, Field
 
 from app.core.config import settings
 from app.core.llm import get_llm
-from app.core.logging import logger
 from app.graph.nodes.synthesizer import (
     content_to_text,
     format_context,
@@ -243,8 +242,7 @@ def _structured_runner(engine: Any) -> Callable[..., Any] | None:
         return None
     try:
         return builder(VerificationResult, method=VERIFIER_METHOD)
-    except Exception as exc:  # noqa: BLE001 - 老版本 langchain 不认 method 参数
-        logger.warning("结构化输出不可用，将回退到文本解析 | {}", exc)
+    except Exception:  # noqa: BLE001 - 老版本 langchain 不认 method 参数
         return None
 
 
@@ -286,10 +284,8 @@ def _verify(engine: Any, answer: str, chunks: list[Any]) -> tuple[str, list[str]
                 clean_claims(raw_claims),
                 str(raw_reason or ""),
             )
-        except Exception as exc:  # noqa: BLE001 - 结构化通道失败不应放弃核查
-            logger.warning(
-                "结构化核查调用失败，回退到文本 JSON 解析 | {}", type(exc).__name__
-            )
+        except Exception:  # noqa: BLE001 - 结构化通道失败不应放弃核查，落到底部文本解析
+            pass
 
     # 兜底：让模型直接吐 JSON。此路径下模型可能给出枚举外的 verdict，
     # normalize_verdict 会把它收敛到 fail。
@@ -328,7 +324,7 @@ def verifier_node(
     ``settings.verifier_model_name``（留空即复用主模型），temperature 固定 0
     —— 核查是判断题，随机性只会让判定不稳定。
 
-    ``max_retry`` **只用于日志与事件文案**，不参与任何判定（闸门在路由函数里）。
+    ``max_retry`` **只用于事件文案**，不参与任何判定（闸门在路由函数里）。
     builder 会把编译期实际生效的阈值传进来，保证文案与真实闸门一致 ——
     否则测试传 ``max_retry=2`` 而文案写着 ``settings.max_retry=3``，会误导排错。
     """
@@ -358,7 +354,6 @@ def verifier_node(
     try:
         verdict, claims, reason = _verify(engine, answer, chunks)
     except Exception as exc:  # noqa: BLE001 - fail-open，见模块 docstring
-        logger.exception("核查未执行 | query={!r}", query[:30])
         return {
             "verdict": VERDICT_PASS,
             "events": [
@@ -370,12 +365,6 @@ def verifier_node(
         }
 
     if verdict == VERDICT_PASS:
-        logger.info(
-            "verifier | pass | query={!r} | chunks={} | reason={}",
-            query[:30],
-            len(chunks),
-            reason[:60],
-        )
         return {
             "verdict": VERDICT_PASS,
             "events": [make_event(NODE_VERIFIER, "核查通过：全部断言均有依据")],
@@ -384,11 +373,6 @@ def verifier_node(
     # 判 fail 却拿不出具体缺口 → 没有可重检的方向，回退只会空转。
     # 此处收敛为 pass，并在事件里写明是「无缺口」而非「已通过」。
     if not claims:
-        logger.warning(
-            "verifier | fail 但无缺口明细，按通过处理 | query={!r} | reason={}",
-            query[:30],
-            reason[:60],
-        )
         return {
             "verdict": VERDICT_PASS,
             "events": [
@@ -416,15 +400,6 @@ def verifier_node(
         claim for claim in claims if claim_key(claim) not in known_keys
     ]
 
-    logger.info(
-        "verifier | fail | query={!r} | 本轮缺口={} | 新增={} | 已回退={}/{} | 新检索词={!r}",
-        query[:30],
-        len(claims),
-        len(fresh_claims),
-        retry_count,
-        limit,
-        retry_query[:60],
-    )
 
     return {
         "verdict": VERDICT_FAIL,

@@ -162,7 +162,7 @@ class GraphState(TypedDict, total=False):
     route: str
     """ROUTE_RETRIEVE | ROUTE_DIRECT。"""
     route_reason: str
-    """人类可读的路由理由，直接进日志与 /query 响应，便于解释与排错。"""
+    """人类可读的路由理由，直接进 /query 响应，便于解释与排错。"""
 
     # ---------- 检索 ----------
     search_query: str

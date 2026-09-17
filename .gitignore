@@ -13,9 +13,8 @@ __pycache__/
 build/
 dist/
 .pytest_cache/
-.coverage
-coverage.xml
-htmlcov/
+.ruff_cache/
+.mypy_cache/
 
 # ---------- 虚拟环境 ----------
 .venv/
@@ -29,7 +28,5 @@ env/
 
 # ---------- 本地工具与会话产物 ----------
 .workbuddy/
-logs/
-*.log
 .DS_Store
 Thumbs.db

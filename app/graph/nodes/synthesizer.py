@@ -31,7 +31,6 @@ from typing import Any
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.core.llm import get_llm
-from app.core.logging import logger
 from app.graph.state import NODE_SYNTHESIZER, ROUTE_DIRECT, GraphState, make_event
 from app.schemas.query import Citation, RetrievedChunk
 
@@ -201,11 +200,6 @@ def synthesizer_node(state: GraphState, *, llm: Any | None = None) -> dict:
     if route == ROUTE_DIRECT:
         system_prompt, user_prompt = SYSTEM_PROMPT_DIRECT, query
     elif not chunks:
-        logger.info(
-            "synthesizer | 无召回块，直接拒答 | query={!r} | attempts={}",
-            query[:30],
-            attempts,
-        )
         return {
             "answer": REFUSE_TEXT,
             "citations": [],
@@ -223,7 +217,6 @@ def synthesizer_node(state: GraphState, *, llm: Any | None = None) -> dict:
     try:
         answer = _invoke(engine, system_prompt, user_prompt)
     except Exception as exc:  # noqa: BLE001 - 生成失败不应丢掉已检索到的块
-        logger.exception("LLM 生成失败 | query={!r}", query[:30])
         return {
             "answer": "",
             "citations": [],
@@ -238,13 +231,6 @@ def synthesizer_node(state: GraphState, *, llm: Any | None = None) -> dict:
 
     citations = extract_citations(answer, chunks)
 
-    logger.info(
-        "synthesizer | route={} | chunks={} | answer={}ch | citations={}",
-        route,
-        len(chunks),
-        len(answer),
-        len(citations),
-    )
 
     return {
         "answer": answer,

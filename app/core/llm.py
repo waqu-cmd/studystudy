@@ -1,24 +1,4 @@
-"""LLM 与 Embedding 客户端单例（阶段 1）。
-
-为什么 Embedding 自己实现，而不用 langchain 的 OpenAIEmbeddings
-------------------------------------------------------------------
-阿里云百炼 text-embedding-v4 有两个硬约束，langchain 的默认行为两条都会踩：
-
-1. 单次请求最多 10 条文本，langchain 默认按 1000 条一批发 -> 接口报 400
-2. 只接受原始字符串，langchain 默认先用 tiktoken 按 token 截断再发 -> 接口报 400
-   （须显式 check_embedding_ctx_length=False）
-
-虽然这两个参数都可配，但直接用 openai SDK 更可控：分批、重试、维度自检、
-超长预检集中在一处，不引入 langchain 的隐式行为。
-
-LLM 侧使用 ChatOpenAI：阶段 2 起 LangGraph 节点依赖 langchain 的 message 协议与
-tool calling，自己包一层没有收益。
-
-客户端生命周期
---------------
-均为进程内懒加载单例。密钥校验推迟到首次取用（require_*_ready），
-因此只要不真正调用 LLM/Embedding，服务仍可启动、/health 仍可访问。
-"""
+"""LLM 与 Embedding 客户端单例。"""
 
 from __future__ import annotations
 
@@ -29,7 +9,6 @@ import openai
 from langchain_openai import ChatOpenAI
 
 from app.core.config import settings
-from app.core.logging import logger
 
 # Embedding 请求参数
 MAX_EMBED_ATTEMPTS = 3
@@ -108,12 +87,6 @@ class DashScopeEmbeddings:
             if not text:
                 raise EmbeddingError(f"第 {index} 条文本为空，Embedding 无法处理空串")
             if len(text) > MAX_EMBED_CHARS:
-                logger.warning(
-                    "文本超长已截断 | index={} | chars={} -> {}",
-                    index,
-                    len(text),
-                    MAX_EMBED_CHARS,
-                )
                 text = text[:MAX_EMBED_CHARS]
             prepared.append(text)
 
@@ -142,12 +115,6 @@ class DashScopeEmbeddings:
                     f"Embedding 调用重试 {MAX_EMBED_ATTEMPTS} 次仍失败：{exc}"
                 ) from exc
             delay = RETRY_BASE_DELAY * (2**attempt)
-            logger.warning(
-                "Embedding 调用失败，{:.1f}s 后重试 | attempt={} | {}",
-                delay,
-                attempt + 1,
-                type(exc).__name__,
-            )
             time.sleep(delay)
             return self._embed_batch(batch, attempt=attempt + 1)
         except openai.BadRequestError as exc:
@@ -196,13 +163,6 @@ def get_embedder() -> DashScopeEmbeddings:
             model=settings.embedding_model,
             dim=settings.embedding_dim,
             batch_size=settings.embedding_batch_size,
-        )
-        logger.info(
-            "Embedding 客户端就绪 | provider={} | model={} | dim={} | batch={}",
-            settings.embedding_provider,
-            settings.embedding_model,
-            settings.embedding_dim,
-            settings.embedding_batch_size,
         )
     return _embedder
 

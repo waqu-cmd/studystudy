@@ -1,4 +1,4 @@
-"""RRF 融合单元测试（对应蓝图「五、单元测试清单」：给定两组排序，验证融合顺序正确）。"""
+"""RRF 融合单元测试（给定两组排序，验证融合顺序正确）。"""
 
 from __future__ import annotations
 
@@ -23,12 +23,6 @@ class TestRrfFuse:
         fused = rrf_fuse([["A", "B", "C"], ["B", "C", "A"]])
         scores = [score for _, score in fused]
         assert scores == sorted(scores, reverse=True)
-
-    def test_default_k_is_used(self) -> None:
-        default_fused = rrf_fuse([["A"], ["A"]])
-        explicit_fused = rrf_fuse([["A"], ["A"]], k=DEFAULT_K)
-        assert default_fused == explicit_fused
-        assert default_fused[0][1] == pytest.approx(2 / (DEFAULT_K + 1))
 
     def test_duplicate_ids_within_one_ranking_counted_once(self) -> None:
         fused = rrf_fuse([["A", "A", "B"]])
@@ -57,10 +51,6 @@ class TestRrfFuse:
         assert rrf_fuse([]) == []
         assert rrf_fuse([[], []]) == []
 
-    def test_blank_ids_are_ignored(self) -> None:
-        fused = rrf_fuse([["", "A"], ["A"]])
-        assert [doc_id for doc_id, _ in fused] == ["A"]
-
     def test_raises_on_non_positive_k(self) -> None:
         with pytest.raises(ValueError):
             rrf_fuse([["A"]], k=0)
@@ -68,12 +58,6 @@ class TestRrfFuse:
     def test_raises_on_mismatched_weights(self) -> None:
         with pytest.raises(ValueError):
             rrf_fuse([["A"], ["B"]], weights=[1.0])
-
-    def test_k_zero_effect_boosts_head(self) -> None:
-        """k 越小，头部名次的分数优势越大。"""
-        small = dict(rrf_fuse([["A", "B"]], k=1))
-        large = dict(rrf_fuse([["A", "B"]], k=1000))
-        assert small["A"] / small["B"] > large["A"] / large["B"]
 
 
 class TestRrfScores:

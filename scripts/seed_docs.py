@@ -21,7 +21,6 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from app.core.config import settings  # noqa: E402
-from app.core.logging import setup_logging  # noqa: E402
 from app.rag.indexer import SUPPORTED_SUFFIXES, IndexOutcome, Indexer  # noqa: E402
 
 
@@ -89,7 +88,6 @@ def print_table(outcomes: list[IndexOutcome]) -> None:
 
 def main() -> int:
     args = parse_args()
-    setup_logging(log_file=False)
 
     indexer = Indexer()
 

@@ -1,0 +1,3334 @@
+{
+  "stage": "stage7",
+  "app_version": "0.1.0",
+  "captured_at": "2026-09-17T15:25:01",
+  "as_of_date": "2026-09-17",
+  "mode": "retrieval-only",
+  "partial": false,
+  "include_expired": false,
+  "pipeline": "Supervisor(LLM 路由 + Send 并行) -> MCP 混合检索(向量+BM25,RRF k=60) -> Synthesizer -> Verifier(自纠正, max_retry=3)",
+  "config": {
+    "llm_provider": "dashscope",
+    "llm_model": "deepseek-v4-flash",
+    "judge_model": "deepseek-v4-pro",
+    "verifier_model": "qwen3.6-flash",
+    "embedding_provider": "dashscope",
+    "embedding_model": "text-embedding-v4",
+    "embedding_dim": 1024,
+    "top_k": 10,
+    "rrf_k": 60,
+    "max_retry": 3,
+    "memory_enabled": true,
+    "mcp_enabled": true,
+    "mcp_servers": "chroma,filesystem"
+  },
+  "corpus": {
+    "documents": 29,
+    "documents_active": 26,
+    "chunks_total": 140,
+    "chunks_active": 128,
+    "chunks_expired": 12,
+    "stale_versions": [
+      "2025",
+      "2026Q1",
+      "2026Q2"
+    ]
+  },
+  "golden_set": {
+    "path": "golden_set.json",
+    "version": "1.0",
+    "n_cases": 35
+  },
+  "summary": {
+    "n_cases": 35,
+    "n_answerable": 30,
+    "n_trap": 5,
+    "retrieval": {
+      "hit_at_3": {
+        "n": 30,
+        "value": 1.0
+      },
+      "mrr": {
+        "n": 30,
+        "value": 0.95
+      },
+      "version_accuracy": {
+        "n": 30,
+        "value": 0.9333333333333333
+      },
+      "stale_hit_chunks": 0,
+      "stale_hit_cases": 0
+    },
+    "generation": {
+      "measured": false,
+      "refusal_rate": {
+        "n": 0,
+        "value": null
+      },
+      "refusal_rate_text": {
+        "n": 0,
+        "value": null
+      },
+      "judge_refusal_rate": {
+        "n": 0,
+        "value": null
+      },
+      "refusal_diagnostics": [],
+      "faithfulness": {
+        "n": 0,
+        "value": null
+      },
+      "citation_accuracy": {
+        "n": 0,
+        "value": null
+      },
+      "unsupported_claims_total": 0,
+      "judged_cases": 0,
+      "judge_failed_cases": 0
+    },
+    "lifecycle": {
+      "measured_with_answer": false,
+      "verifier_trigger_rate": {
+        "n": 0,
+        "value": null
+      },
+      "avg_retrieval_attempts": 1.0,
+      "avg_retry_count": null,
+      "route_counts": {
+        "retrieve": 35
+      },
+      "error_cases": []
+    }
+  },
+  "elapsed_s": 22.3,
+  "cases": [
+    {
+      "id": "q1",
+      "query": "2026年第三季度新客户签约的返点比例是多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p1"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p3",
+        "service_level_agreement_policy_p0",
+        "anti_bribery_policy_p1",
+        "sales_policy_2026q3_p2",
+        "service_level_agreement_policy_p4",
+        "performance_review_policy_p0",
+        "service_level_agreement_policy_p1",
+        "contract_review_policy_p4",
+        "marketing_event_policy_p2"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "v2",
+        "v3",
+        "2026Q3",
+        "v2",
+        "v4",
+        "v2",
+        "v2",
+        "v1"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：季度/客户/签约",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 5910,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "q2",
+      "query": "华东区的区域补贴在标准返点基础上上浮多少个百分点？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p1"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p2",
+        "supplier_management_policy_p2",
+        "service_level_agreement_policy_p4",
+        "marketing_event_policy_p0",
+        "marketing_event_policy_p1",
+        "service_level_agreement_policy_p2",
+        "customer_complaint_policy_p3"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "v2",
+        "v1",
+        "v1",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：标准/补贴/返点",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 229,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "q3",
+      "query": "单笔订单金额超过多少需要报销售VP审批？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p1"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "fund_payment_approval_policy_p0",
+        "sales_policy_2026q3_p1",
+        "procurement_policy_2026_p0",
+        "expense_reimbursement_policy_p3",
+        "expense_reimbursement_policy_p2",
+        "fund_payment_approval_policy_p2",
+        "procurement_policy_2026_p2",
+        "marketing_event_policy_p1",
+        "marketing_event_policy_p2",
+        "code_of_conduct_policy_p2"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "2026Q3",
+        "2026",
+        "v3",
+        "v3",
+        "v2",
+        "2026",
+        "v1",
+        "v1",
+        "v2"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.5,
+      "version_accuracy": 0.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：审批/报销",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 497,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "q4",
+      "query": "员工出差一线城市的住宿费上限是多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p1"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "service_level_agreement_policy_p4",
+        "employee_training_policy_p3",
+        "marketing_event_policy_p1",
+        "expense_reimbursement_policy_p2",
+        "rd_project_management_policy_p0",
+        "anti_bribery_policy_p2",
+        "code_of_conduct_policy_p1",
+        "supplier_management_policy_p2"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "v1",
+        "v3",
+        "v2",
+        "v3",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：上限/住宿",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 236,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "q5",
+      "query": "公司账号密码的最短长度要求是多少位？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p1"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p1",
+        "code_review_policy_p0",
+        "recruitment_policy_p2",
+        "customer_complaint_policy_p1",
+        "incident_response_policy_p1",
+        "supplier_management_policy_p2",
+        "marketing_event_policy_p3",
+        "contract_review_policy_p2",
+        "performance_review_policy_p1",
+        "it_security_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v1",
+        "v3",
+        "v3",
+        "v2",
+        "v3",
+        "v1",
+        "v2",
+        "v4",
+        "v2"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：密码/账号",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 221,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n06",
+      "query": "《2026Q3 销售政策》适用于哪些区域？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p0"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p2",
+        "bidding_management_policy_p0",
+        "anti_bribery_policy_p1",
+        "marketing_event_policy_p0",
+        "service_level_agreement_policy_p1",
+        "service_level_agreement_policy_p4",
+        "code_of_conduct_policy_p3",
+        "sales_policy_2026q3_p3"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v1",
+        "v3",
+        "v1",
+        "v2",
+        "v2",
+        "v2",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：政策",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 244,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n07",
+      "query": "2026Q3 的客户保护期延长到多久？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p2"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p2",
+        "service_level_agreement_policy_p1",
+        "service_level_agreement_policy_p2",
+        "service_level_agreement_policy_p0",
+        "sales_policy_2026q3_p0",
+        "whistleblower_policy_p3",
+        "code_review_policy_p2",
+        "release_management_policy_p4",
+        "service_level_agreement_policy_p3",
+        "supplier_management_policy_p3"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "v2",
+        "v2",
+        "v2",
+        "2026Q3",
+        "v1",
+        "v1",
+        "v3",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：保护期/客户",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 209,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n08",
+      "query": "销售代表在保护期内重复跟进其他同事的客户，会有什么处罚？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p2"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p0",
+        "code_of_conduct_policy_p4",
+        "anti_bribery_policy_p1",
+        "sales_policy_2026q3_p1",
+        "bidding_management_policy_p3",
+        "whistleblower_policy_p3",
+        "procurement_policy_2026_p4",
+        "customer_complaint_policy_p3",
+        "supplier_management_policy_p0"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "v2",
+        "v3",
+        "2026Q3",
+        "v1",
+        "v1",
+        "2026",
+        "v3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：保护期/客户",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 215,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n09",
+      "query": "跨区报备需要提前几个工作日在 CRM 中提交？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p2"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p2",
+        "anti_bribery_policy_p2",
+        "code_of_conduct_policy_p1",
+        "technical_documentation_policy_p1",
+        "customer_complaint_policy_p2",
+        "fund_payment_approval_policy_p2",
+        "marketing_event_policy_p3",
+        "service_level_agreement_policy_p3",
+        "expense_reimbursement_policy_p3",
+        "internal_audit_policy_p2"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "v3",
+        "v2",
+        "v1",
+        "v3",
+        "v2",
+        "v1",
+        "v2",
+        "v3",
+        "v2"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：报备",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 210,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n10",
+      "query": "2026Q3 的返点在次月几号之前随工资发放？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p3"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p2",
+        "service_level_agreement_policy_p4",
+        "fund_payment_approval_policy_p3",
+        "marketing_event_policy_p3",
+        "asset_management_policy_p2",
+        "supplier_management_policy_p3",
+        "performance_review_policy_p1",
+        "release_management_policy_p0"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v2",
+        "v2",
+        "v1",
+        "v4",
+        "v3",
+        "v4",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：返点",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 229,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n11",
+      "query": "季度累计达成率低于 80% 会有什么后果？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p3"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "budget_management_policy_p2",
+        "quality_management_policy_p0",
+        "supplier_management_policy_p2",
+        "release_management_policy_p2",
+        "performance_review_policy_p0",
+        "service_level_agreement_policy_p1",
+        "code_review_policy_p4",
+        "service_level_agreement_policy_p4",
+        "budget_management_policy_p3"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "v3",
+        "v3",
+        "v3",
+        "v3",
+        "v4",
+        "v2",
+        "v1",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：季度",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 221,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n12",
+      "query": "我这个季度新签一单能拿几个点的提成？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p1"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p1",
+        "performance_review_policy_p3",
+        "technical_documentation_policy_p4",
+        "service_level_agreement_policy_p4",
+        "rd_project_management_policy_p1",
+        "performance_review_policy_p0",
+        "code_review_policy_p4",
+        "performance_review_policy_p1",
+        "technical_documentation_policy_p1"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "v4",
+        "v1",
+        "v2",
+        "v2",
+        "v4",
+        "v1",
+        "v4",
+        "v1"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.5,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：季度/提成",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 218,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n13",
+      "query": "公司配发的笔记本电脑可以带回家吗？需要满足什么安全条件？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p0"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p0",
+        "it_security_policy_p2",
+        "code_of_conduct_policy_p1",
+        "rd_project_management_policy_p3",
+        "asset_management_policy_p5",
+        "asset_management_policy_p1",
+        "technical_documentation_policy_p2",
+        "anti_bribery_policy_p2",
+        "code_of_conduct_policy_p3",
+        "bidding_management_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v2",
+        "v2",
+        "v4",
+        "v4",
+        "v1",
+        "v3",
+        "v2",
+        "v1"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：安全",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 247,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n14",
+      "query": "办公设备能不能自己装软件？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p0"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p0",
+        "asset_management_policy_p5",
+        "marketing_event_policy_p4",
+        "technical_documentation_policy_p4",
+        "code_of_conduct_policy_p0",
+        "technical_documentation_policy_p3",
+        "incident_response_policy_p0",
+        "it_security_policy_p2",
+        "asset_management_policy_p1",
+        "employee_training_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v4",
+        "v1",
+        "v1",
+        "v2",
+        "v1",
+        "v2",
+        "v2",
+        "v4",
+        "v2"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：设备",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 219,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n15",
+      "query": "设备遗失后必须在多长时间内报备？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p0"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p0",
+        "incident_response_policy_p3",
+        "sales_policy_2026q3_p2",
+        "anti_bribery_policy_p2",
+        "asset_management_policy_p1",
+        "asset_management_policy_p2",
+        "asset_management_policy_p4",
+        "it_security_policy_p1",
+        "employee_training_policy_p4",
+        "release_management_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "2026Q3",
+        "v3",
+        "v4",
+        "v4",
+        "v4",
+        "v2",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：报备/设备",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 254,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n16",
+      "query": "密码多久需要强制更换一次？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p1"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p1",
+        "rd_project_management_policy_p4",
+        "technical_documentation_policy_p1",
+        "employee_training_policy_p4",
+        "rd_project_management_policy_p3",
+        "performance_review_policy_p1",
+        "technical_documentation_policy_p4",
+        "it_security_policy_p3",
+        "recruitment_policy_p2",
+        "code_of_conduct_policy_p1"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v1",
+        "v2",
+        "v2",
+        "v4",
+        "v1",
+        "v2",
+        "v3",
+        "v2"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：密码",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 215,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n17",
+      "query": "哪些类型的数据被禁止外发？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p2"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p2",
+        "it_security_policy_p0",
+        "marketing_event_policy_p4",
+        "code_of_conduct_policy_p3",
+        "it_security_policy_p1",
+        "customer_complaint_policy_p4",
+        "marketing_event_policy_p3",
+        "it_security_policy_p3",
+        "supplier_management_policy_p4",
+        "anti_bribery_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v1",
+        "v2",
+        "v2",
+        "v3",
+        "v1",
+        "v2",
+        "v3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：外发/数据",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 273,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n18",
+      "query": "确需向外部提供数据时应该走什么渠道？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p2"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p2",
+        "marketing_event_policy_p2",
+        "supplier_management_policy_p4",
+        "anti_bribery_policy_p4",
+        "customer_complaint_policy_p1",
+        "whistleblower_policy_p1",
+        "it_security_policy_p3",
+        "budget_management_policy_p2",
+        "marketing_event_policy_p4",
+        "recruitment_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v1",
+        "v3",
+        "v3",
+        "v3",
+        "v1",
+        "v2",
+        "v3",
+        "v1",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：数据",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 251,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n19",
+      "query": "用个人网盘传公司数据算什么性质的问题？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p2"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p2",
+        "whistleblower_policy_p4",
+        "code_of_conduct_policy_p3",
+        "it_security_policy_p3",
+        "internal_audit_policy_p3",
+        "whistleblower_policy_p0",
+        "it_security_policy_p0",
+        "asset_management_policy_p4",
+        "code_of_conduct_policy_p4",
+        "technical_documentation_policy_p2"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v1",
+        "v2",
+        "v2",
+        "v2",
+        "v1",
+        "v2",
+        "v4",
+        "v2",
+        "v1"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：数据/网盘",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 235,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n20",
+      "query": "第一次违反信息安全制度会怎么处理？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p3"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p3",
+        "it_security_policy_p2",
+        "code_of_conduct_policy_p4",
+        "whistleblower_policy_p4",
+        "anti_bribery_policy_p4",
+        "internal_audit_policy_p4",
+        "whistleblower_policy_p1",
+        "code_of_conduct_policy_p0",
+        "fund_payment_approval_policy_p1",
+        "supplier_management_policy_p4"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v2",
+        "v1",
+        "v3",
+        "v2",
+        "v1",
+        "v2",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：制度/安全",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 238,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n21",
+      "query": "造成数据泄露可能面临哪些处罚？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p3"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p3",
+        "supplier_management_policy_p3",
+        "it_security_policy_p2",
+        "code_of_conduct_policy_p4",
+        "asset_management_policy_p4",
+        "whistleblower_policy_p1",
+        "incident_response_policy_p0",
+        "fund_payment_approval_policy_p4",
+        "bidding_management_policy_p3",
+        "whistleblower_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v3",
+        "v2",
+        "v2",
+        "v4",
+        "v1",
+        "v2",
+        "v2",
+        "v1",
+        "v1"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：数据",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 228,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n22",
+      "query": "市内打车费每人每月上限是多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p0"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p1",
+        "service_level_agreement_policy_p4",
+        "expense_reimbursement_policy_p3",
+        "expense_reimbursement_policy_p2",
+        "employee_training_policy_p1",
+        "fund_payment_approval_policy_p2",
+        "supplier_management_policy_p2",
+        "employee_training_policy_p3",
+        "release_management_policy_p4"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v2",
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "v3",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：上限",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 243,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n23",
+      "query": "城际出行坐飞机有什么限制？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p0"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p1",
+        "code_of_conduct_policy_p3",
+        "anti_bribery_policy_p2",
+        "recruitment_policy_p3",
+        "expense_reimbursement_policy_p2",
+        "release_management_policy_p0",
+        "it_security_policy_p2",
+        "code_review_policy_p0",
+        "employee_training_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v2",
+        "v3",
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v1",
+        "v2"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "默认走检索（忠实度优先）",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 241,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n24",
+      "query": "晚上十点以后因公打车，费用怎么算？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p0"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p0",
+        "employee_training_policy_p3",
+        "expense_reimbursement_policy_p1",
+        "service_level_agreement_policy_p4",
+        "marketing_event_policy_p1",
+        "code_of_conduct_policy_p2",
+        "expense_reimbursement_policy_p2",
+        "expense_reimbursement_policy_p3",
+        "anti_bribery_policy_p0",
+        "anti_bribery_policy_p2"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v2",
+        "v3",
+        "v2",
+        "v1",
+        "v2",
+        "v3",
+        "v3",
+        "v3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "默认走检索（忠实度优先）",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 221,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n25",
+      "query": "去二线城市出差，住宿费每晚最多能报多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p1"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "service_level_agreement_policy_p4",
+        "marketing_event_policy_p1",
+        "expense_reimbursement_policy_p2",
+        "supplier_management_policy_p2",
+        "employee_training_policy_p3",
+        "it_security_policy_p1",
+        "anti_bribery_policy_p2",
+        "expense_reimbursement_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v2",
+        "v1",
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "v3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：住宿",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 237,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n26",
+      "query": "住宿费超出标准的部分需要谁同意才能报销？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p1"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p2",
+        "budget_management_policy_p4",
+        "employee_training_policy_p3",
+        "expense_reimbursement_policy_p3",
+        "rd_project_management_policy_p0",
+        "marketing_event_policy_p1",
+        "sales_policy_2026q3_p1",
+        "performance_review_policy_p1"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v3",
+        "v2",
+        "v1",
+        "2026Q3",
+        "v4"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：住宿/报销/标准",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 251,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n27",
+      "query": "客户招待的人均标准是多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p2"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p2",
+        "anti_bribery_policy_p2",
+        "service_level_agreement_policy_p0",
+        "service_level_agreement_policy_p1",
+        "sales_policy_2026q3_p1",
+        "expense_reimbursement_policy_p1",
+        "service_level_agreement_policy_p2",
+        "expense_reimbursement_policy_p0",
+        "employee_training_policy_p3",
+        "supplier_management_policy_p2"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "2026Q3",
+        "v3",
+        "v2",
+        "v3",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：客户/招待/标准",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 286,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n28",
+      "query": "请客户吃饭一次最多能花多少钱？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p2"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p2",
+        "service_level_agreement_policy_p0",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p1",
+        "supplier_management_policy_p2",
+        "anti_bribery_policy_p2",
+        "fund_payment_approval_policy_p2",
+        "service_level_agreement_policy_p2",
+        "expense_reimbursement_policy_p0",
+        "employee_training_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v2",
+        "v2",
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "v3",
+        "v2"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：客户",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 232,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n29",
+      "query": "上个月的报销单要在每月几号前提交？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p3"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p3",
+        "budget_management_policy_p0",
+        "service_level_agreement_policy_p3",
+        "expense_reimbursement_policy_p0",
+        "contract_review_policy_p1",
+        "sales_policy_2026q3_p2",
+        "fund_payment_approval_policy_p4",
+        "rd_project_management_policy_p2",
+        "anti_bribery_policy_p2",
+        "customer_complaint_policy_p4"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v2",
+        "v3",
+        "v2",
+        "2026Q3",
+        "v2",
+        "v2",
+        "v3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：报销",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 208,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "n30",
+      "query": "单笔报销金额超过多少需要先经部门负责人审批？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p3"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "fund_payment_approval_policy_p0",
+        "expense_reimbursement_policy_p3",
+        "employee_training_policy_p3",
+        "budget_management_policy_p3",
+        "procurement_policy_2026_p2",
+        "sales_policy_2026q3_p1",
+        "marketing_event_policy_p1",
+        "asset_management_policy_p3",
+        "rd_project_management_policy_p2",
+        "expense_reimbursement_policy_p2"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v3",
+        "v2",
+        "v3",
+        "2026",
+        "2026Q3",
+        "v1",
+        "v4",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.5,
+      "version_accuracy": 0.0,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：审批/报销",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 301,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "t1",
+      "query": "2026年第一季度的销售返点政策是怎么规定的？",
+      "category": "trap",
+      "trap_type": "expired_version",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p2",
+        "anti_bribery_policy_p1",
+        "performance_review_policy_p3",
+        "service_level_agreement_policy_p4",
+        "code_review_policy_p4",
+        "supplier_management_policy_p3",
+        "code_of_conduct_policy_p1"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "v4",
+        "v2",
+        "v1",
+        "v3",
+        "v2"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：季度/政策/规定",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 218,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "t2",
+      "query": "2026年第二季度华东区的区域补贴是多少？",
+      "category": "trap",
+      "trap_type": "expired_version",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p3",
+        "supplier_management_policy_p2",
+        "service_level_agreement_policy_p4",
+        "rd_project_management_policy_p1",
+        "marketing_event_policy_p0",
+        "expense_reimbursement_policy_p0",
+        "service_level_agreement_policy_p1",
+        "code_review_policy_p4"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "v2",
+        "v2",
+        "v1",
+        "v3",
+        "v2",
+        "v1"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：季度/补贴",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 224,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "t3",
+      "query": "2026年第二季度相比第一季度，返点比例有哪些变化？",
+      "category": "trap",
+      "trap_type": "comparison_expired",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p1",
+        "technical_documentation_policy_p1",
+        "performance_review_policy_p0",
+        "service_level_agreement_policy_p4",
+        "rd_project_management_policy_p1",
+        "release_management_policy_p1",
+        "supplier_management_policy_p3",
+        "code_review_policy_p4",
+        "sales_policy_2026q3_p2"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "v1",
+        "v4",
+        "v2",
+        "v2",
+        "v3",
+        "v3",
+        "v1",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "命中业务关键词：季度/返点",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 216,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "t4",
+      "query": "公司员工的年假有多少天？",
+      "category": "trap",
+      "trap_type": "out_of_corpus",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "retrieved_chunk_ids": [
+        "employee_training_policy_p4",
+        "employee_training_policy_p1",
+        "performance_review_policy_p4",
+        "code_of_conduct_policy_p1",
+        "anti_bribery_policy_p3",
+        "supplier_management_policy_p2",
+        "recruitment_policy_p2",
+        "whistleblower_policy_p0",
+        "technical_documentation_policy_p2",
+        "recruitment_policy_p4"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v4",
+        "v2",
+        "v3",
+        "v3",
+        "v3",
+        "v1",
+        "v1",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "默认走检索（忠实度优先）",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 240,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    },
+    {
+      "id": "t5",
+      "query": "公司是否为员工提供补充商业医疗保险？",
+      "category": "trap",
+      "trap_type": "out_of_corpus",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "retrieved_chunk_ids": [
+        "recruitment_policy_p3",
+        "anti_bribery_policy_p4",
+        "whistleblower_policy_p0",
+        "code_of_conduct_policy_p1",
+        "code_of_conduct_policy_p0",
+        "anti_bribery_policy_p3",
+        "anti_bribery_policy_p0",
+        "anti_bribery_policy_p2",
+        "rd_project_management_policy_p1",
+        "recruitment_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v1",
+        "v2",
+        "v2",
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2025",
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 0,
+      "answer": "",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "默认走检索（忠实度优先）",
+      "sub_queries": [],
+      "verdict": "",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "",
+      "elapsed_ms": 227,
+      "error": "",
+      "error_retries": 0,
+      "error_history": []
+    }
+  ],
+  "cases_include_expired": [
+    {
+      "id": "q1",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q1_p1",
+        "sales_policy_2026q2_p1",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q2_p3",
+        "sales_policy_2026q1_p3",
+        "sales_policy_2026q3_p3",
+        "service_level_agreement_policy_p0",
+        "service_level_agreement_policy_p4",
+        "anti_bribery_policy_p1",
+        "service_level_agreement_policy_p1"
+      ],
+      "retrieved_versions": [
+        "2026Q1",
+        "2026Q2",
+        "2026Q3",
+        "2026Q2",
+        "2026Q1",
+        "2026Q3",
+        "v2",
+        "v2",
+        "v3",
+        "v2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.3333333333333333,
+      "version_accuracy": 0.0,
+      "stale_hits": 4
+    },
+    {
+      "id": "q2",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q2_p1",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q1_p1",
+        "sales_policy_2026q2_p3",
+        "sales_policy_2026q1_p3",
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q2_p0",
+        "service_level_agreement_policy_p4",
+        "sales_policy_2026q1_p0"
+      ],
+      "retrieved_versions": [
+        "2026Q2",
+        "2026Q3",
+        "2026Q1",
+        "2026Q2",
+        "2026Q1",
+        "2026Q3",
+        "2026Q3",
+        "2026Q2",
+        "v2",
+        "2026Q1"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.5,
+      "version_accuracy": 0.0,
+      "stale_hits": 6
+    },
+    {
+      "id": "q3",
+      "retrieved_chunk_ids": [
+        "fund_payment_approval_policy_p0",
+        "sales_policy_2026q2_p1",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q1_p1",
+        "expense_reimbursement_policy_p2",
+        "procurement_policy_2025_p1",
+        "procurement_policy_2026_p2",
+        "marketing_event_policy_p1",
+        "expense_reimbursement_policy_p3",
+        "marketing_event_policy_p2"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "2026Q2",
+        "2026Q3",
+        "2026Q1",
+        "v3",
+        "2025",
+        "2026",
+        "v1",
+        "v3",
+        "v1"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.3333333333333333,
+      "version_accuracy": 0.0,
+      "stale_hits": 3
+    },
+    {
+      "id": "q4",
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "service_level_agreement_policy_p4",
+        "employee_training_policy_p3",
+        "marketing_event_policy_p1",
+        "expense_reimbursement_policy_p2",
+        "rd_project_management_policy_p0",
+        "anti_bribery_policy_p2",
+        "code_of_conduct_policy_p1",
+        "supplier_management_policy_p2"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "v1",
+        "v3",
+        "v2",
+        "v3",
+        "v2",
+        "v3"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "q5",
+      "retrieved_chunk_ids": [
+        "it_security_policy_p1",
+        "code_review_policy_p0",
+        "recruitment_policy_p2",
+        "customer_complaint_policy_p1",
+        "incident_response_policy_p1",
+        "supplier_management_policy_p2",
+        "marketing_event_policy_p3",
+        "contract_review_policy_p2",
+        "performance_review_policy_p1",
+        "it_security_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v1",
+        "v3",
+        "v3",
+        "v2",
+        "v3",
+        "v1",
+        "v2",
+        "v4",
+        "v2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n06",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q1_p0",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q2_p0",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q2_p1",
+        "sales_policy_2026q1_p2",
+        "sales_policy_2026q1_p1",
+        "sales_policy_2026q2_p2",
+        "bidding_management_policy_p0",
+        "sales_policy_2026q3_p2"
+      ],
+      "retrieved_versions": [
+        "2026Q1",
+        "2026Q3",
+        "2026Q2",
+        "2026Q3",
+        "2026Q2",
+        "2026Q1",
+        "2026Q1",
+        "2026Q2",
+        "v1",
+        "2026Q3"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.5,
+      "version_accuracy": 0.0,
+      "stale_hits": 6
+    },
+    {
+      "id": "n07",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q2_p2",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q1_p2",
+        "service_level_agreement_policy_p1",
+        "service_level_agreement_policy_p2",
+        "service_level_agreement_policy_p0",
+        "sales_policy_2026q1_p0",
+        "whistleblower_policy_p3",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q2_p0"
+      ],
+      "retrieved_versions": [
+        "2026Q2",
+        "2026Q3",
+        "2026Q1",
+        "v2",
+        "v2",
+        "v2",
+        "2026Q1",
+        "v1",
+        "2026Q3",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.5,
+      "version_accuracy": 0.0,
+      "stale_hits": 4
+    },
+    {
+      "id": "n08",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q1_p2",
+        "sales_policy_2026q2_p2",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q1_p0",
+        "sales_policy_2026q2_p0",
+        "sales_policy_2026q3_p0",
+        "code_of_conduct_policy_p4",
+        "anti_bribery_policy_p1",
+        "sales_policy_2026q2_p1",
+        "sales_policy_2026q1_p1"
+      ],
+      "retrieved_versions": [
+        "2026Q1",
+        "2026Q2",
+        "2026Q3",
+        "2026Q1",
+        "2026Q2",
+        "2026Q3",
+        "v2",
+        "v3",
+        "2026Q2",
+        "2026Q1"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.3333333333333333,
+      "version_accuracy": 0.0,
+      "stale_hits": 6
+    },
+    {
+      "id": "n09",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q1_p2",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q2_p2",
+        "anti_bribery_policy_p2",
+        "technical_documentation_policy_p1",
+        "customer_complaint_policy_p2",
+        "fund_payment_approval_policy_p2",
+        "marketing_event_policy_p3",
+        "code_of_conduct_policy_p1",
+        "service_level_agreement_policy_p3"
+      ],
+      "retrieved_versions": [
+        "2026Q1",
+        "2026Q3",
+        "2026Q2",
+        "v3",
+        "v1",
+        "v3",
+        "v2",
+        "v1",
+        "v2",
+        "v2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.5,
+      "version_accuracy": 0.0,
+      "stale_hits": 2
+    },
+    {
+      "id": "n10",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q1_p3",
+        "sales_policy_2026q2_p3",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q1_p2",
+        "sales_policy_2026q2_p2",
+        "sales_policy_2026q2_p1",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q1_p1",
+        "fund_payment_approval_policy_p3"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q1",
+        "2026Q2",
+        "2026Q3",
+        "2026Q1",
+        "2026Q2",
+        "2026Q2",
+        "2026Q3",
+        "2026Q1",
+        "v2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 6
+    },
+    {
+      "id": "n11",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q2_p3",
+        "sales_policy_2026q1_p3",
+        "sales_policy_2026q3_p3",
+        "budget_management_policy_p2",
+        "quality_management_policy_p0",
+        "supplier_management_policy_p2",
+        "release_management_policy_p2",
+        "code_review_policy_p4",
+        "performance_review_policy_p0",
+        "service_level_agreement_policy_p4"
+      ],
+      "retrieved_versions": [
+        "2026Q2",
+        "2026Q1",
+        "2026Q3",
+        "v3",
+        "v3",
+        "v3",
+        "v3",
+        "v1",
+        "v4",
+        "v2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.3333333333333333,
+      "version_accuracy": 0.0,
+      "stale_hits": 2
+    },
+    {
+      "id": "n12",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q1_p3",
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q2_p3",
+        "sales_policy_2026q3_p1",
+        "technical_documentation_policy_p4",
+        "rd_project_management_policy_p1",
+        "sales_policy_2026q1_p1",
+        "sales_policy_2026q2_p1",
+        "code_review_policy_p4",
+        "service_level_agreement_policy_p4"
+      ],
+      "retrieved_versions": [
+        "2026Q1",
+        "2026Q3",
+        "2026Q2",
+        "2026Q3",
+        "v1",
+        "v2",
+        "2026Q1",
+        "2026Q2",
+        "v1",
+        "v2"
+      ],
+      "hit_at_k": false,
+      "reciprocal_rank": 0.25,
+      "version_accuracy": 0.0,
+      "stale_hits": 4
+    },
+    {
+      "id": "n13",
+      "retrieved_chunk_ids": [
+        "it_security_policy_p0",
+        "it_security_policy_p2",
+        "code_of_conduct_policy_p1",
+        "rd_project_management_policy_p3",
+        "asset_management_policy_p5",
+        "asset_management_policy_p1",
+        "technical_documentation_policy_p2",
+        "anti_bribery_policy_p2",
+        "code_of_conduct_policy_p3",
+        "bidding_management_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v2",
+        "v2",
+        "v4",
+        "v4",
+        "v1",
+        "v3",
+        "v2",
+        "v1"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n14",
+      "retrieved_chunk_ids": [
+        "it_security_policy_p0",
+        "asset_management_policy_p5",
+        "marketing_event_policy_p4",
+        "technical_documentation_policy_p4",
+        "incident_response_policy_p0",
+        "technical_documentation_policy_p3",
+        "code_of_conduct_policy_p0",
+        "it_security_policy_p2",
+        "asset_management_policy_p1",
+        "employee_training_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v4",
+        "v1",
+        "v1",
+        "v2",
+        "v1",
+        "v2",
+        "v2",
+        "v4",
+        "v2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n15",
+      "retrieved_chunk_ids": [
+        "it_security_policy_p0",
+        "sales_policy_2026q2_p2",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q1_p2",
+        "asset_management_policy_p1",
+        "incident_response_policy_p3",
+        "asset_management_policy_p2",
+        "it_security_policy_p1",
+        "asset_management_policy_p4",
+        "employee_training_policy_p4"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "2026Q2",
+        "2026Q3",
+        "2026Q1",
+        "v4",
+        "v2",
+        "v4",
+        "v2",
+        "v4",
+        "v2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 2
+    },
+    {
+      "id": "n16",
+      "retrieved_chunk_ids": [
+        "it_security_policy_p1",
+        "rd_project_management_policy_p4",
+        "technical_documentation_policy_p1",
+        "employee_training_policy_p4",
+        "rd_project_management_policy_p3",
+        "performance_review_policy_p1",
+        "technical_documentation_policy_p4",
+        "it_security_policy_p3",
+        "recruitment_policy_p2",
+        "code_of_conduct_policy_p1"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v1",
+        "v2",
+        "v2",
+        "v4",
+        "v1",
+        "v2",
+        "v3",
+        "v2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n17",
+      "retrieved_chunk_ids": [
+        "it_security_policy_p2",
+        "it_security_policy_p0",
+        "marketing_event_policy_p4",
+        "code_of_conduct_policy_p3",
+        "it_security_policy_p1",
+        "customer_complaint_policy_p4",
+        "marketing_event_policy_p3",
+        "it_security_policy_p3",
+        "supplier_management_policy_p4",
+        "anti_bribery_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v1",
+        "v2",
+        "v2",
+        "v3",
+        "v1",
+        "v2",
+        "v3",
+        "v3"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n18",
+      "retrieved_chunk_ids": [
+        "it_security_policy_p2",
+        "marketing_event_policy_p2",
+        "supplier_management_policy_p4",
+        "anti_bribery_policy_p4",
+        "customer_complaint_policy_p1",
+        "whistleblower_policy_p1",
+        "it_security_policy_p3",
+        "budget_management_policy_p2",
+        "marketing_event_policy_p4",
+        "recruitment_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v1",
+        "v3",
+        "v3",
+        "v3",
+        "v1",
+        "v2",
+        "v3",
+        "v1",
+        "v3"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n19",
+      "retrieved_chunk_ids": [
+        "it_security_policy_p2",
+        "whistleblower_policy_p4",
+        "code_of_conduct_policy_p3",
+        "it_security_policy_p3",
+        "internal_audit_policy_p3",
+        "whistleblower_policy_p0",
+        "it_security_policy_p0",
+        "asset_management_policy_p4",
+        "code_of_conduct_policy_p4",
+        "technical_documentation_policy_p2"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v1",
+        "v2",
+        "v2",
+        "v2",
+        "v1",
+        "v2",
+        "v4",
+        "v2",
+        "v1"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n20",
+      "retrieved_chunk_ids": [
+        "it_security_policy_p3",
+        "it_security_policy_p2",
+        "code_of_conduct_policy_p4",
+        "whistleblower_policy_p4",
+        "anti_bribery_policy_p4",
+        "internal_audit_policy_p4",
+        "whistleblower_policy_p1",
+        "code_of_conduct_policy_p0",
+        "fund_payment_approval_policy_p1",
+        "supplier_management_policy_p4"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v2",
+        "v1",
+        "v3",
+        "v2",
+        "v1",
+        "v2",
+        "v2",
+        "v3"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n21",
+      "retrieved_chunk_ids": [
+        "it_security_policy_p3",
+        "supplier_management_policy_p3",
+        "it_security_policy_p2",
+        "code_of_conduct_policy_p4",
+        "asset_management_policy_p4",
+        "whistleblower_policy_p1",
+        "incident_response_policy_p0",
+        "fund_payment_approval_policy_p4",
+        "bidding_management_policy_p3",
+        "whistleblower_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v3",
+        "v2",
+        "v2",
+        "v4",
+        "v1",
+        "v2",
+        "v2",
+        "v1",
+        "v1"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n22",
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p1",
+        "service_level_agreement_policy_p4",
+        "expense_reimbursement_policy_p3",
+        "expense_reimbursement_policy_p2",
+        "employee_training_policy_p1",
+        "employee_training_policy_p3",
+        "supplier_management_policy_p2",
+        "marketing_event_policy_p1",
+        "release_management_policy_p4"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v2",
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "v3",
+        "v1",
+        "v3"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n23",
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p1",
+        "code_of_conduct_policy_p3",
+        "anti_bribery_policy_p2",
+        "recruitment_policy_p3",
+        "expense_reimbursement_policy_p2",
+        "release_management_policy_p0",
+        "it_security_policy_p2",
+        "code_review_policy_p0",
+        "employee_training_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v2",
+        "v3",
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v1",
+        "v2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n24",
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p0",
+        "employee_training_policy_p3",
+        "expense_reimbursement_policy_p1",
+        "service_level_agreement_policy_p4",
+        "marketing_event_policy_p1",
+        "code_of_conduct_policy_p2",
+        "anti_bribery_policy_p2",
+        "expense_reimbursement_policy_p2",
+        "expense_reimbursement_policy_p3",
+        "anti_bribery_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v2",
+        "v3",
+        "v2",
+        "v1",
+        "v2",
+        "v3",
+        "v3",
+        "v3",
+        "v3"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n25",
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "service_level_agreement_policy_p4",
+        "marketing_event_policy_p1",
+        "expense_reimbursement_policy_p2",
+        "supplier_management_policy_p2",
+        "employee_training_policy_p3",
+        "it_security_policy_p1",
+        "anti_bribery_policy_p2",
+        "expense_reimbursement_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v2",
+        "v1",
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "v3",
+        "v3"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n26",
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p2",
+        "budget_management_policy_p4",
+        "employee_training_policy_p3",
+        "expense_reimbursement_policy_p3",
+        "rd_project_management_policy_p0",
+        "performance_review_policy_p1",
+        "marketing_event_policy_p1",
+        "fund_payment_approval_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v3",
+        "v2",
+        "v4",
+        "v1",
+        "v2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n27",
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p2",
+        "anti_bribery_policy_p2",
+        "service_level_agreement_policy_p0",
+        "sales_policy_2026q1_p1",
+        "service_level_agreement_policy_p1",
+        "sales_policy_2026q3_p1",
+        "expense_reimbursement_policy_p1",
+        "sales_policy_2026q2_p1",
+        "service_level_agreement_policy_p2",
+        "expense_reimbursement_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v2",
+        "2026Q1",
+        "v2",
+        "2026Q3",
+        "v3",
+        "2026Q2",
+        "v2",
+        "v3"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 2
+    },
+    {
+      "id": "n28",
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p2",
+        "service_level_agreement_policy_p0",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p1",
+        "supplier_management_policy_p2",
+        "anti_bribery_policy_p2",
+        "fund_payment_approval_policy_p2",
+        "service_level_agreement_policy_p2",
+        "expense_reimbursement_policy_p0",
+        "employee_training_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v2",
+        "v2",
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "v3",
+        "v2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0
+    },
+    {
+      "id": "n29",
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p3",
+        "budget_management_policy_p0",
+        "expense_reimbursement_policy_p0",
+        "service_level_agreement_policy_p3",
+        "contract_review_policy_p1",
+        "sales_policy_2026q2_p2",
+        "fund_payment_approval_policy_p4",
+        "sales_policy_2026q3_p2",
+        "anti_bribery_policy_p2",
+        "sales_policy_2026q1_p2"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "2026Q2",
+        "v2",
+        "2026Q3",
+        "v3",
+        "2026Q1"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 2
+    },
+    {
+      "id": "n30",
+      "retrieved_chunk_ids": [
+        "fund_payment_approval_policy_p0",
+        "expense_reimbursement_policy_p3",
+        "employee_training_policy_p3",
+        "budget_management_policy_p3",
+        "procurement_policy_2025_p1",
+        "sales_policy_2026q2_p1",
+        "procurement_policy_2026_p2",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q1_p1",
+        "marketing_event_policy_p1"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v3",
+        "v2",
+        "v3",
+        "2025",
+        "2026Q2",
+        "2026",
+        "2026Q3",
+        "2026Q1",
+        "v1"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.5,
+      "version_accuracy": 0.0,
+      "stale_hits": 3
+    },
+    {
+      "id": "t1",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q2_p3",
+        "sales_policy_2026q1_p3",
+        "sales_policy_2026q1_p0",
+        "sales_policy_2026q2_p0",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q1_p1",
+        "sales_policy_2026q2_p1",
+        "service_level_agreement_policy_p4"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q2",
+        "2026Q1",
+        "2026Q1",
+        "2026Q2",
+        "2026Q3",
+        "2026Q3",
+        "2026Q1",
+        "2026Q2",
+        "v2"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 6
+    },
+    {
+      "id": "t2",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q2_p1",
+        "sales_policy_2026q1_p1",
+        "sales_policy_2026q2_p0",
+        "sales_policy_2026q1_p0",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p3",
+        "service_level_agreement_policy_p4",
+        "rd_project_management_policy_p1",
+        "marketing_event_policy_p0"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q2",
+        "2026Q1",
+        "2026Q2",
+        "2026Q1",
+        "2026Q3",
+        "2026Q3",
+        "v2",
+        "v2",
+        "v1"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 4
+    },
+    {
+      "id": "t3",
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q2_p3",
+        "sales_policy_2026q1_p3",
+        "sales_policy_2026q1_p1",
+        "sales_policy_2026q2_p1",
+        "sales_policy_2026q3_p1",
+        "performance_review_policy_p0",
+        "rd_project_management_policy_p1",
+        "code_review_policy_p4",
+        "service_level_agreement_policy_p4"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q2",
+        "2026Q1",
+        "2026Q1",
+        "2026Q2",
+        "2026Q3",
+        "v4",
+        "v2",
+        "v1",
+        "v2"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 4
+    },
+    {
+      "id": "t4",
+      "retrieved_chunk_ids": [
+        "employee_training_policy_p4",
+        "employee_training_policy_p1",
+        "performance_review_policy_p4",
+        "code_of_conduct_policy_p1",
+        "anti_bribery_policy_p3",
+        "supplier_management_policy_p2",
+        "recruitment_policy_p2",
+        "whistleblower_policy_p0",
+        "technical_documentation_policy_p2",
+        "recruitment_policy_p4"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v4",
+        "v2",
+        "v3",
+        "v3",
+        "v3",
+        "v1",
+        "v1",
+        "v3"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 0
+    },
+    {
+      "id": "t5",
+      "retrieved_chunk_ids": [
+        "recruitment_policy_p3",
+        "anti_bribery_policy_p4",
+        "whistleblower_policy_p0",
+        "code_of_conduct_policy_p1",
+        "code_of_conduct_policy_p0",
+        "anti_bribery_policy_p3",
+        "anti_bribery_policy_p0",
+        "anti_bribery_policy_p2",
+        "rd_project_management_policy_p1",
+        "recruitment_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v1",
+        "v2",
+        "v2",
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v3"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 0
+    }
+  ],
+  "summary_include_expired": {
+    "n_cases": 35,
+    "n_answerable": 30,
+    "n_trap": 5,
+    "retrieval": {
+      "hit_at_3": {
+        "n": 30,
+        "value": 0.9666666666666667
+      },
+      "mrr": {
+        "n": 30,
+        "value": 0.8027777777777777
+      },
+      "version_accuracy": {
+        "n": 30,
+        "value": 0.6666666666666666
+      },
+      "stale_hit_chunks": 66,
+      "stale_hit_cases": 17
+    },
+    "generation": {
+      "measured": false,
+      "refusal_rate": {
+        "n": 0,
+        "value": null
+      },
+      "refusal_rate_text": {
+        "n": 0,
+        "value": null
+      },
+      "judge_refusal_rate": {
+        "n": 0,
+        "value": null
+      },
+      "refusal_diagnostics": [],
+      "faithfulness": {
+        "n": 0,
+        "value": null
+      },
+      "citation_accuracy": {
+        "n": 0,
+        "value": null
+      },
+      "unsupported_claims_total": 0,
+      "judged_cases": 0,
+      "judge_failed_cases": 0
+    },
+    "lifecycle": {
+      "measured_with_answer": false,
+      "verifier_trigger_rate": {
+        "n": 0,
+        "value": null
+      },
+      "avg_retrieval_attempts": 1.0,
+      "avg_retry_count": null,
+      "route_counts": {
+        "retrieve": 35
+      },
+      "error_cases": []
+    }
+  }
+}

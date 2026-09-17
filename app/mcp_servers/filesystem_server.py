@@ -27,7 +27,7 @@
 
 约束 3：**工具函数内部不得执行「首次 import」**。
     实测：只含 ``importlib.import_module(...)`` 的探针工具会**永久挂起**，
-    而同步 sleep、同步 HTTP、stderr 日志均正常 —— import 需要全局 import lock，
+    而同步 sleep、同步 HTTP 均正常 —— import 需要全局 import lock，
     与事件循环线程互锁。故 ``app.rag.chunker`` 的 import 已在模块顶层完成。
 
 路径安全
@@ -42,7 +42,6 @@ from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 
 from app.core.config import settings
-from app.core.logging import logger, setup_mcp_logging
 
 # 顶层 import（约束 3）：绝不能在工具函数内首次 import
 from app.rag.chunker import chunk_document, parse_front_matter
@@ -136,7 +135,6 @@ def _describe(path: Path) -> dict:
 def list_docs() -> list[dict]:
     """文档清单。目录不存在时返回空列表（不抛异常）。"""
     if not DOCS_DIR.is_dir():
-        logger.warning("文档目录不存在：{}", DOCS_DIR)
         return []
 
     items: list[dict] = []
@@ -145,7 +143,6 @@ def list_docs() -> list[dict]:
             continue
         items.append(_describe(path))
 
-    logger.info("list_docs | dir={} | count={}", DOCS_DIR, len(items))
     return items
 
 
@@ -168,14 +165,11 @@ def read_file(filename: str) -> dict:
     item = _describe(path)
     item["content"] = content
     item["lines"] = content.count("\n") + 1
-    logger.info("read_file | file={} | chars={}", path.name, len(content))
     return item
 
 
 def main() -> None:
-    """入口：先配 stderr 日志，再进 stdio 事件循环。"""
-    setup_mcp_logging()
-    logger.info("filesystem_server 启动 | docs_dir={}", DOCS_DIR)
+    """入口：进 stdio 事件循环。"""
     mcp.run(transport="stdio")
 
 

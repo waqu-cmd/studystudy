@@ -81,11 +81,10 @@ from functools import lru_cache
 from typing import Any, Callable
 
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import END, START, StateGraph
+from langgraph.graph import START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from app.core.config import settings
-from app.core.logging import logger
 from app.graph.edges import (
     AFTER_RETRIEVER_MAP,
     AFTER_SUPERVISOR_MAP,
@@ -116,7 +115,7 @@ ALL_NODES: tuple[str, ...] = (
     NODE_SYNTHESIZER,
     NODE_VERIFIER,
 )
-"""图内全部节点名，按执行顺序排列（供日志与流程图测试引用）。"""
+"""图内全部节点名，按执行顺序排列（供外部按序枚举与流程图核对）。"""
 
 
 def _bind(node_fn: Callable[..., dict], **kwargs: Any) -> Callable[[GraphState], dict]:
@@ -194,13 +193,6 @@ def build_graph(
     )
 
     compiled = graph.compile(checkpointer=checkpointer)
-    logger.debug(
-        "图已编译 | nodes={} | max_retry={} | checkpointer={} | mcp_enabled={}",
-        list(ALL_NODES),
-        limit,
-        type(checkpointer).__name__ if checkpointer else "None",
-        settings.mcp_enabled,
-    )
     return compiled
 
 
@@ -221,7 +213,6 @@ def default_checkpointer() -> MemorySaver:
     global _checkpointer
     if _checkpointer is None:
         _checkpointer = MemorySaver()
-        logger.info("多轮会话已启用 | checkpointer=MemorySaver（进程内存，重启即清空）")
     return _checkpointer
 
 

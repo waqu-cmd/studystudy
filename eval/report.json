@@ -1,0 +1,2541 @@
+{
+  "stage": "stage7",
+  "app_version": "0.1.0",
+  "captured_at": "2026-09-16T17:39:00",
+  "as_of_date": "2026-09-16",
+  "mode": "full",
+  "partial": false,
+  "include_expired": false,
+  "pipeline": "Supervisor(LLM 路由 + Send 并行) -> MCP 混合检索(向量+BM25,RRF k=60) -> Synthesizer -> Verifier(自纠正, max_retry=3)",
+  "config": {
+    "llm_provider": "dashscope",
+    "llm_model": "deepseek-v4-flash",
+    "judge_model": "deepseek-v4-flash",
+    "verifier_model": "deepseek-v4-flash",
+    "embedding_provider": "dashscope",
+    "embedding_model": "text-embedding-v4",
+    "embedding_dim": 1024,
+    "top_k": 10,
+    "rrf_k": 60,
+    "max_retry": 3,
+    "memory_enabled": true,
+    "mcp_enabled": true,
+    "mcp_servers": "chroma,filesystem"
+  },
+  "corpus": {
+    "documents": 5,
+    "documents_active": 3,
+    "chunks_total": 20,
+    "chunks_active": 12,
+    "chunks_expired": 8,
+    "stale_versions": [
+      "2026Q1",
+      "2026Q2"
+    ]
+  },
+  "golden_set": {
+    "path": "golden_set.json",
+    "version": "1.0",
+    "n_cases": 35
+  },
+  "summary": {
+    "n_cases": 35,
+    "n_answerable": 30,
+    "n_trap": 5,
+    "retrieval": {
+      "hit_at_3": {
+        "n": 30,
+        "value": 1.0
+      },
+      "mrr": {
+        "n": 30,
+        "value": 0.9833333333333333
+      },
+      "version_accuracy": {
+        "n": 30,
+        "value": 1.0
+      },
+      "stale_hit_chunks": 0,
+      "stale_hit_cases": 0
+    },
+    "generation": {
+      "measured": true,
+      "refusal_rate": {
+        "n": 5,
+        "value": 0.8
+      },
+      "refusal_rate_text": {
+        "n": 5,
+        "value": 1.0
+      },
+      "judge_refusal_rate": {
+        "n": 5,
+        "value": 1.0
+      },
+      "refusal_diagnostics": [
+        {
+          "id": "t2",
+          "text_refusal": true,
+          "strict_refusal": false,
+          "judge_refusal_correct": true,
+          "citations": [
+            "sales_policy_2026q3_p1"
+          ],
+          "answer": "根据现有资料无法确认2026年第二季度华东区的区域补贴。参考资料中仅有2026年第三季度（2026-07-01~2026-09-30）的销售政策，其中提到华东区区域补贴为0.8个百分点 [sales_policy_2026q3_p1]，但第二季度的政策未提供。"
+        }
+      ],
+      "faithfulness": {
+        "n": 35,
+        "value": 1.0
+      },
+      "citation_accuracy": {
+        "n": 35,
+        "value": 1.0
+      },
+      "unsupported_claims_total": 0,
+      "judged_cases": 35,
+      "judge_failed_cases": 0
+    },
+    "lifecycle": {
+      "measured_with_answer": true,
+      "verifier_trigger_rate": {
+        "n": 35,
+        "value": 0.0
+      },
+      "avg_retrieval_attempts": 1.0,
+      "avg_retry_count": 0.0,
+      "route_counts": {
+        "retrieve": 35
+      },
+      "error_cases": []
+    }
+  },
+  "elapsed_s": 591.7,
+  "cases": [
+    {
+      "id": "q1",
+      "query": "2026年第三季度新客户签约的返点比例是多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p1"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p0",
+        "expense_reimbursement_policy_p2",
+        "it_security_policy_p2",
+        "expense_reimbursement_policy_p0",
+        "it_security_policy_p3",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p3"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "v2",
+        "v3",
+        "v2",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "2026年第三季度新客户签约的返点比例为3.5% [sales_policy_2026q3_p1]。",
+      "citations": [
+        "sales_policy_2026q3_p1"
+      ],
+      "route": "retrieve",
+      "route_reason": "问题涉及企业内部新客户签约返点比例，属于制度性信息，必须查知识库。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 13193,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案只包含一个事实断言，在参考资料中有明确依据；引用指向正确支撑内容的块；参考资料有相关内容，答案正确作答。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "q2",
+      "query": "华东区的区域补贴在标准返点基础上上浮多少个百分点？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p1"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p2",
+        "expense_reimbursement_policy_p2",
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p1",
+        "it_security_policy_p3"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v2"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "华东区的区域补贴在标准返点基础上上浮 **0.8 个百分点** [sales_policy_2026q3_p1]。依据《2026Q3 销售政策》返点政策小节：华东区因份额争夺加剧，区域补贴由 0.5 个百分点提高至 0.8 个百分点 [sales_policy_2026q3_p1]。",
+      "citations": [
+        "sales_policy_2026q3_p1"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问华东区区域补贴在标准返点基础上的上浮百分点，属于企业内部制度信息，必须查知识库才能准确回答。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 19857,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案中的事实性断言（华东区区域补贴上浮0.8个百分点）在参考资料中有明确依据。引用正确。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "q3",
+      "query": "单笔订单金额超过多少需要报销售VP审批？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p1"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p1",
+        "expense_reimbursement_policy_p2",
+        "expense_reimbursement_policy_p3",
+        "sales_policy_2026q3_p2",
+        "expense_reimbursement_policy_p1",
+        "sales_policy_2026q3_p0",
+        "expense_reimbursement_policy_p0",
+        "it_security_policy_p2",
+        "it_security_policy_p0",
+        "it_security_policy_p1"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "v3",
+        "v3",
+        "2026Q3",
+        "v3",
+        "2026Q3",
+        "v3",
+        "v2",
+        "v2",
+        "v2"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "单笔订单金额超过300万元需要报销售VP审批 [sales_policy_2026q3_p1]。",
+      "citations": [
+        "sales_policy_2026q3_p1"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问企业内部的审批流程，属于需要查知识库的问题",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 27171,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案中的断言'单笔订单金额超过300万元需要报销售VP审批'在参考资料[sales_policy_2026q3_p1]中有明确依据，且引用准确。参考资料包含所需信息，系统正确作答，未拒答。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "q4",
+      "query": "员工出差一线城市的住宿费上限是多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p1"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p2",
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p1",
+        "it_security_policy_p0",
+        "sales_policy_2026q3_p2",
+        "expense_reimbursement_policy_p2",
+        "it_security_policy_p1"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "2026Q3",
+        "2026Q3",
+        "v2",
+        "2026Q3",
+        "v3",
+        "v2"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "员工出差一线城市的住宿费上限为 **500 元每晚** [expense_reimbursement_policy_p1]。",
+      "citations": [
+        "expense_reimbursement_policy_p1"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问企业内部差旅报销标准，属于需要检索知识库才能准确回答的问题。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 7046,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "只有一个断言且完全有依据，引用准确。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "q5",
+      "query": "公司账号密码的最短长度要求是多少位？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p1"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p1",
+        "it_security_policy_p0",
+        "sales_policy_2026q3_p2",
+        "it_security_policy_p2",
+        "it_security_policy_p3",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p3",
+        "expense_reimbursement_policy_p3",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p2"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "2026Q3",
+        "v2",
+        "v2",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "v3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "公司账号密码的最短长度要求是 **12 位** [it_security_policy_p1]。",
+      "citations": [
+        "it_security_policy_p1"
+      ],
+      "route": "retrieve",
+      "route_reason": "询问公司账号密码的最短长度要求，属于企业内部安全政策，必须查知识库才能准确回答。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 6109,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n06",
+      "query": "《2026Q3 销售政策》适用于哪些区域？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p0"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p3",
+        "it_security_policy_p0",
+        "it_security_policy_p2",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p2",
+        "expense_reimbursement_policy_p0"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v2",
+        "v2",
+        "v3",
+        "v2",
+        "v3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "《2026Q3 销售政策》适用于华北、华东、华南、西南四大区 [sales_policy_2026q3_p0]。",
+      "citations": [
+        "sales_policy_2026q3_p0"
+      ],
+      "route": "retrieve",
+      "route_reason": "询问企业内部政策《2026Q3 销售政策》的适用区域，需要查企业知识库。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 10947,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案包含 1 个事实性断言，全部可在参考资料中找到依据；引用 [sales_policy_2026q3_p0] 准确支撑所在句子；参考资料有相关内容，系统正确作答，拒答行为正确。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n07",
+      "query": "2026Q3 的客户保护期延长到多久？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p2"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p1",
+        "it_security_policy_p1",
+        "it_security_policy_p2",
+        "sales_policy_2026q3_p3",
+        "expense_reimbursement_policy_p2",
+        "it_security_policy_p0",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p3"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v2",
+        "v2",
+        "2026Q3",
+        "v3",
+        "v2",
+        "v3",
+        "v2"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "2026Q3 的客户保护期延长到 12 个月 [sales_policy_2026q3_p2]。",
+      "citations": [
+        "sales_policy_2026q3_p2"
+      ],
+      "route": "retrieve",
+      "route_reason": "询问企业内部客户保护期政策，需要查知识库",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 35650,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n08",
+      "query": "销售代表在保护期内重复跟进其他同事的客户，会有什么处罚？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p2"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p0",
+        "it_security_policy_p3",
+        "sales_policy_2026q3_p1",
+        "it_security_policy_p2",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p2",
+        "it_security_policy_p0",
+        "expense_reimbursement_policy_p1",
+        "sales_policy_2026q3_p3"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "v2",
+        "2026Q3",
+        "v2",
+        "v2",
+        "v3",
+        "v2",
+        "v3",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "销售代表在保护期内重复跟进其他同事的客户，将被处罚**当月返点减半**[sales_policy_2026q3_p2]。",
+      "citations": [
+        "sales_policy_2026q3_p2"
+      ],
+      "route": "retrieve",
+      "route_reason": "询问企业内部的销售管理政策（客户保护期及对应处罚），属于必须查企业知识库的问题",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 7168,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案正确引用了参考资料，所有断言均有依据。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n09",
+      "query": "跨区报备需要提前几个工作日在 CRM 中提交？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p2"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p2",
+        "expense_reimbursement_policy_p3",
+        "sales_policy_2026q3_p3",
+        "it_security_policy_p0",
+        "it_security_policy_p2",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p0",
+        "expense_reimbursement_policy_p0",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p1"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "v3",
+        "2026Q3",
+        "v2",
+        "v2",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "跨区报备需要提前 **3 个工作日** 在 CRM 中提交 [sales_policy_2026q3_p2]。",
+      "citations": [
+        "sales_policy_2026q3_p2"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问企业内部跨区报备流程的提前天数，答案依赖于企业知识库",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 8675,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n10",
+      "query": "2026Q3 的返点在次月几号之前随工资发放？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p3"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p2",
+        "expense_reimbursement_policy_p3",
+        "expense_reimbursement_policy_p0",
+        "sales_policy_2026q3_p0",
+        "it_security_policy_p3",
+        "it_security_policy_p0",
+        "it_security_policy_p2",
+        "it_security_policy_p1"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "v3",
+        "2026Q3",
+        "v2",
+        "v2",
+        "v2",
+        "v2"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "2026Q3 的返点于次月 **10 日**前随工资发放 [sales_policy_2026q3_p3]。",
+      "citations": [
+        "sales_policy_2026q3_p3"
+      ],
+      "route": "retrieve",
+      "route_reason": "询问企业内部返点发放时间规则，必须查知识库",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 6357,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案仅包含一个事实性断言，且完全在参考资料中找到依据；引用准确；参考资料有相关内容，答案正确作答。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n11",
+      "query": "季度累计达成率低于 80% 会有什么后果？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p3"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p2",
+        "it_security_policy_p3",
+        "expense_reimbursement_policy_p2",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p1",
+        "it_security_policy_p2",
+        "expense_reimbursement_policy_p0"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v2",
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "季度累计达成率低于80%的，次季度返点比例下调0.5个百分点 [sales_policy_2026q3_p3]。",
+      "citations": [
+        "sales_policy_2026q3_p3"
+      ],
+      "route": "retrieve",
+      "route_reason": "询问企业内部考核规则，需要查询知识库",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 10996,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案仅有一句事实性断言，在参考资料 [sales_policy_2026q3_p3] 中有明确依据；引用准确且全面。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n12",
+      "query": "我这个季度新签一单能拿几个点的提成？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "sales_policy_2026q3_p1"
+      ],
+      "required_doc_versions": [
+        "2026Q3"
+      ],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p2",
+        "expense_reimbursement_policy_p3",
+        "expense_reimbursement_policy_p2",
+        "it_security_policy_p1",
+        "it_security_policy_p3",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p1",
+        "sales_policy_2026q3_p0"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "v3",
+        "v3",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 0.5,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "根据现有资料，本季度新签一单的标准返点比例为新客户签约金额的 3.5% [sales_policy_2026q3_p1]。华东区在此基础上另有 0.8 个百分点的区域补贴，若您在华东区则比例为 4.3% [sales_policy_2026q3_p1]。其他区域无额外补贴，以 3.5% 为准。",
+      "citations": [
+        "sales_policy_2026q3_p1"
+      ],
+      "route": "retrieve",
+      "route_reason": "询问新签一单提成点数，属于企业内部薪酬制度相关问题，必须查知识库。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 70256,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案中的三个事实性断言均可从参考资料中找到依据：标准返点比例3.5%和华东区补贴0.8个百分点均明确写于[sales_policy_2026q3_p1]；其他区域无额外补贴的推断也合理（参考资料只规定了华东区的补贴）。引用均准确。参考资料有相关内容，答案正常作答，拒答行为正确。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n13",
+      "query": "公司配发的笔记本电脑可以带回家吗？需要满足什么安全条件？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p0"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p0",
+        "it_security_policy_p2",
+        "expense_reimbursement_policy_p3",
+        "expense_reimbursement_policy_p0",
+        "sales_policy_2026q3_p2",
+        "expense_reimbursement_policy_p2",
+        "sales_policy_2026q3_p0",
+        "it_security_policy_p3",
+        "it_security_policy_p1",
+        "sales_policy_2026q3_p1"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v3",
+        "v3",
+        "2026Q3",
+        "v3",
+        "2026Q3",
+        "v2",
+        "v2",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "可以带回家使用，但必须满足以下安全条件：开启全盘加密并设置开机口令 [it_security_policy_p0]。",
+      "citations": [
+        "it_security_policy_p0"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户明确询问公司配发笔记本电脑的携带规定及安全条件，属于企业内部制度相关，必须查知识库。",
+      "sub_queries": [
+        "公司配发笔记本电脑是否可以带回家",
+        "公司配发笔记本电脑带回家的安全要求"
+      ],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 7335,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案中的两个断言均能在参考资料[it_security_policy_p0]中找到明确依据，引用正确且参考资料充分，故忠实度1.0、引用准确率1.0，且正常作答，拒答行为正确。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n14",
+      "query": "办公设备能不能自己装软件？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p0"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p0",
+        "it_security_policy_p2",
+        "expense_reimbursement_policy_p0",
+        "it_security_policy_p1",
+        "sales_policy_2026q3_p0",
+        "expense_reimbursement_policy_p3",
+        "expense_reimbursement_policy_p2",
+        "sales_policy_2026q3_p2",
+        "it_security_policy_p3",
+        "sales_policy_2026q3_p1"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v3",
+        "v2",
+        "2026Q3",
+        "v3",
+        "v3",
+        "2026Q3",
+        "v2",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "不能。公司明确禁止在办公设备上安装未经 IT 部门授权的软件 [it_security_policy_p0]。",
+      "citations": [
+        "it_security_policy_p0"
+      ],
+      "route": "retrieve",
+      "route_reason": "涉及企业内部对办公设备软件安装的管理规定，属于政策类问题",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 8074,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案中的断言'不能安装未经授权的软件'在参考资料[it_security_policy_p0]中有明确依据，引用准确，且答案正确回答了有参考资料支撑的问题。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n15",
+      "query": "设备遗失后必须在多长时间内报备？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p0"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p0",
+        "sales_policy_2026q3_p2",
+        "it_security_policy_p1",
+        "it_security_policy_p2",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p2",
+        "sales_policy_2026q3_p0",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p3",
+        "sales_policy_2026q3_p1"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "2026Q3",
+        "v2",
+        "v2",
+        "v3",
+        "v3",
+        "2026Q3",
+        "v3",
+        "v2",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "设备遗失后必须在 **2 小时内** 通过 IT 服务台报备 [it_security_policy_p0]。",
+      "citations": [
+        "it_security_policy_p0"
+      ],
+      "route": "retrieve",
+      "route_reason": "涉及企业内部设备遗失报备制度，需要查知识库",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 6625,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案仅包含一句事实性断言，两个断言均可在参考资料[it_security_policy_p0]中找到明确依据，因此忠实度满分。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n16",
+      "query": "密码多久需要强制更换一次？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p1"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p1",
+        "it_security_policy_p3",
+        "it_security_policy_p0",
+        "it_security_policy_p2",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p3",
+        "expense_reimbursement_policy_p2",
+        "sales_policy_2026q3_p0",
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v2",
+        "v2",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "2026Q3",
+        "v3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "密码每 90 天强制更换一次 [it_security_policy_p1]。",
+      "citations": [
+        "it_security_policy_p1"
+      ],
+      "route": "retrieve",
+      "route_reason": "询问企业信息安全政策中密码更换周期，属于企业内部信息，必须检索知识库才能准确回答",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 6047,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": false,
+        "reason": "答案单独断言密码每90天强制更换一次，该断言在[it_security_policy_p1]中有明确依据；引用准确对应。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n17",
+      "query": "哪些类型的数据被禁止外发？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p2"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p2",
+        "it_security_policy_p0",
+        "it_security_policy_p1",
+        "it_security_policy_p3",
+        "expense_reimbursement_policy_p3",
+        "expense_reimbursement_policy_p0",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p0",
+        "expense_reimbursement_policy_p1"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v2",
+        "v2",
+        "v3",
+        "v3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "客户数据、合同文本与财务数据一律禁止外发 [it_security_policy_p2]。",
+      "citations": [
+        "it_security_policy_p2"
+      ],
+      "route": "retrieve",
+      "route_reason": "询问企业内部数据外发政策，属于企业知识库范围",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 6042,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案仅包含一个事实性断言，该断言在参考资料[it_security_policy_p2]中有明确依据，且引用准确无误；由于参考资料充分且答案正确作答，拒答行为符合预期。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n18",
+      "query": "确需向外部提供数据时应该走什么渠道？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p2"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p2",
+        "it_security_policy_p3",
+        "it_security_policy_p0",
+        "expense_reimbursement_policy_p2",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "sales_policy_2026q3_p2",
+        "expense_reimbursement_policy_p1",
+        "sales_policy_2026q3_p1"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v2",
+        "v3",
+        "v3",
+        "v2",
+        "v3",
+        "2026Q3",
+        "v3",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "确需向外部提供数据时，须通过加密邮件网关传输，并抄送信息安全负责人 [it_security_policy_p2]。",
+      "citations": [
+        "it_security_policy_p2"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问向外部提供数据的渠道，属于企业内部制度规范，必须查企业知识库。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 11035,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "系统答案中的断言“须通过加密邮件网关传输，并抄送信息安全负责人”完全来源于参考资料[it_security_policy_p2]，且引用正确。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n19",
+      "query": "用个人网盘传公司数据算什么性质的问题？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p2"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p2",
+        "it_security_policy_p3",
+        "it_security_policy_p0",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p2",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p3",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p2"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v2",
+        "v2",
+        "v3",
+        "v3",
+        "v3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "使用个人网盘传输公司数据属于严重违规 [it_security_policy_p2]。",
+      "citations": [
+        "it_security_policy_p2"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问使用个人网盘传输公司数据的性质，这属于企业内部数据安全管理政策范畴，需查企业知识库获取相关制度定义和处罚规定。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 13076,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案仅包含一个事实性断言，该断言在参考资料 [it_security_policy_p2] 中有明确依据；引用准确；且参考资料包含问题所需内容，答案正确作答。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n20",
+      "query": "第一次违反信息安全制度会怎么处理？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p3"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p3",
+        "it_security_policy_p2",
+        "it_security_policy_p1",
+        "it_security_policy_p0",
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p2",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p2",
+        "sales_policy_2026q3_p0",
+        "expense_reimbursement_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v2",
+        "v2",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "v3",
+        "2026Q3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "第一次违反信息安全制度，给予书面警告并强制参加安全培训 [it_security_policy_p3]。",
+      "citations": [
+        "it_security_policy_p3"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问企业内部信息安全制度的处理规定，属于需要查询知识库的检索类问题",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 6036,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "无拒答；答案中的断言完全基于参考资料。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n21",
+      "query": "造成数据泄露可能面临哪些处罚？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "it_security_policy_p3"
+      ],
+      "required_doc_versions": [
+        "v2"
+      ],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p3",
+        "it_security_policy_p2",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p1",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p3",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p0",
+        "sales_policy_2026q3_p1",
+        "expense_reimbursement_policy_p2"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v2",
+        "v3",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "v2",
+        "2026Q3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "造成数据泄露可能面临降级、解除劳动合同处理，并保留追究法律责任的权利 [it_security_policy_p3]。",
+      "citations": [
+        "it_security_policy_p3"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问数据泄露的处罚，属于企业内部制度相关政策，需要查知识库",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 6434,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案仅一句事实断言，完全有依据；引用正确；参考资料有相关内容，未拒答。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n22",
+      "query": "市内打车费每人每月上限是多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p0"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p3",
+        "expense_reimbursement_policy_p2",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p3",
+        "it_security_policy_p1",
+        "it_security_policy_p2",
+        "sales_policy_2026q3_p1",
+        "it_security_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v3",
+        "v3",
+        "2026Q3",
+        "2026Q3",
+        "v2",
+        "v2",
+        "2026Q3",
+        "v2"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "市内打车费每人每月上限为 **800 元**，超出部分自理 [expense_reimbursement_policy_p0]。",
+      "citations": [
+        "expense_reimbursement_policy_p0"
+      ],
+      "route": "retrieve",
+      "route_reason": "问题涉及企业内部报销制度（市内打车费上限），需要查知识库获取准确标准。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 6396,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案中的唯一断言“市内打车费每人每月上限为800元，超出部分自理”在参考资料[expense_reimbursement_policy_p0]中有明确依据。引用准确，所有断言均被支撑。参考资料有相关内容，答案正确作答。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n23",
+      "query": "城际出行坐飞机有什么限制？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p0"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p1",
+        "it_security_policy_p0",
+        "sales_policy_2026q3_p0",
+        "it_security_policy_p1",
+        "sales_policy_2026q3_p1",
+        "expense_reimbursement_policy_p2",
+        "it_security_policy_p2",
+        "it_security_policy_p3",
+        "expense_reimbursement_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v2",
+        "2026Q3",
+        "v2",
+        "2026Q3",
+        "v3",
+        "v2",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "城际出行乘坐飞机的限制是：仅限经济舱，且须提前 7 天预订 [expense_reimbursement_policy_p0]。",
+      "citations": [
+        "expense_reimbursement_policy_p0"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问城际出行中乘坐飞机的限制，属于企业内部政策，需要查知识库",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 11237,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案完全基于参考资料，引用正确，且正确作答。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n24",
+      "query": "晚上十点以后因公打车，费用怎么算？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p0"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p1",
+        "sales_policy_2026q3_p3",
+        "expense_reimbursement_policy_p2",
+        "sales_policy_2026q3_p1",
+        "expense_reimbursement_policy_p3",
+        "sales_policy_2026q3_p2",
+        "it_security_policy_p2",
+        "it_security_policy_p1",
+        "it_security_policy_p0"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "2026Q3",
+        "v3",
+        "2026Q3",
+        "v3",
+        "2026Q3",
+        "v2",
+        "v2",
+        "v2"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "晚上十点以后因公打车产生的费用，不计入每人每月 800 元的打车费月度上限，但需要在报销单中单独说明事由 [expense_reimbursement_policy_p0]。",
+      "citations": [
+        "expense_reimbursement_policy_p0"
+      ],
+      "route": "retrieve",
+      "route_reason": "询问企业因公打车费用政策，属于企业内部制度相关，必须检索知识库。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 20126,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案仅包含一个事实性断言，该断言可在参考资料[expense_reimbursement_policy_p0]中找到依据；引用正确支撑断言；参考资料有相关内容，系统正确作答，拒答行为正确。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n25",
+      "query": "去二线城市出差，住宿费每晚最多能报多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p1"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p2",
+        "sales_policy_2026q3_p1",
+        "it_security_policy_p2",
+        "sales_policy_2026q3_p2",
+        "it_security_policy_p0",
+        "sales_policy_2026q3_p3"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v3",
+        "2026Q3",
+        "v2",
+        "2026Q3",
+        "v2",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "去二线城市出差，住宿费每晚最多可报销 350 元 [expense_reimbursement_policy_p1]。",
+      "citations": [
+        "expense_reimbursement_policy_p1"
+      ],
+      "route": "retrieve",
+      "route_reason": "问题涉及企业内部差旅政策，需要查询知识库才能准确回答。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 21214,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案只有一条事实断言，且该断言在参考资料中有明确依据；引用准确无误；参考资料包含所需信息，答案正确作答。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n26",
+      "query": "住宿费超出标准的部分需要谁同意才能报销？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p1"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p3",
+        "sales_policy_2026q3_p1",
+        "expense_reimbursement_policy_p2",
+        "it_security_policy_p2",
+        "it_security_policy_p0",
+        "it_security_policy_p1",
+        "it_security_policy_p3",
+        "sales_policy_2026q3_p2"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "v3",
+        "2026Q3",
+        "v3",
+        "v2",
+        "v2",
+        "v2",
+        "v2",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "住宿费超出标准的部分需要部门负责人书面同意才能报销[expense_reimbursement_policy_p1]。",
+      "citations": [
+        "expense_reimbursement_policy_p1"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问企业内部报销制度中关于住宿费超标的审批流程，属于企业内部政策相关，必须查企业知识库。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 6714,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案中的断言完全来自参考资料，引用准确。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n27",
+      "query": "客户招待的人均标准是多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p2"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p2",
+        "sales_policy_2026q3_p1",
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p0",
+        "it_security_policy_p1",
+        "it_security_policy_p2",
+        "expense_reimbursement_policy_p3",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p3",
+        "it_security_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "2026Q3",
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "v3",
+        "2026Q3",
+        "2026Q3",
+        "v2"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "客户招待的人均标准为 200 元，单次总额不超过 3000 元 [expense_reimbursement_policy_p2]。",
+      "citations": [
+        "expense_reimbursement_policy_p2"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问企业客户招待的人均标准，属于企业内部制度问题，必须检索知识库。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 9018,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案中的两个事实性断言均有参考资料依据。引用指向的块[expense_reimbursement_policy_p2]确实包含对应内容。参考资料有相关内容，答案作答正确，故拒答行为正确。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n28",
+      "query": "请客户吃饭一次最多能花多少钱？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p2"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p2",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p1",
+        "it_security_policy_p2",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p3",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p3"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v2",
+        "v3",
+        "v2",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "v3",
+        "v2"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "根据现有资料，客户招待单次总额最高不超过3000元。 [expense_reimbursement_policy_p2]",
+      "citations": [
+        "expense_reimbursement_policy_p2"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问客户招待费用的上限，属于企业内部制度问题，需要查知识库才能准确回答。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 6668,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案仅有一条断言，可直接在参考资料中找到依据；引用指向正确的来源块。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n29",
+      "query": "上个月的报销单要在每月几号前提交？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p3"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p3",
+        "expense_reimbursement_policy_p0",
+        "sales_policy_2026q3_p2",
+        "sales_policy_2026q3_p3",
+        "expense_reimbursement_policy_p2",
+        "sales_policy_2026q3_p1",
+        "it_security_policy_p2",
+        "expense_reimbursement_policy_p1",
+        "it_security_policy_p0",
+        "it_security_policy_p1"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "v3",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "2026Q3",
+        "v2",
+        "v3",
+        "v2",
+        "v2"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "每月5日前在财务系统提交上月报销单 [expense_reimbursement_policy_p3]。",
+      "citations": [
+        "expense_reimbursement_policy_p3"
+      ],
+      "route": "retrieve",
+      "route_reason": "该问题涉及企业内部的报销制度，需要查询知识库才能准确回答，不可直接凭常识编造。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 7330,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "正确答案完全基于参考资料。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "n30",
+      "query": "单笔报销金额超过多少需要先经部门负责人审批？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": [
+        "expense_reimbursement_policy_p3"
+      ],
+      "required_doc_versions": [
+        "v3"
+      ],
+      "retrieved_chunk_ids": [
+        "expense_reimbursement_policy_p3",
+        "sales_policy_2026q3_p1",
+        "expense_reimbursement_policy_p1",
+        "expense_reimbursement_policy_p2",
+        "expense_reimbursement_policy_p0",
+        "it_security_policy_p2",
+        "it_security_policy_p0",
+        "it_security_policy_p3",
+        "it_security_policy_p1",
+        "sales_policy_2026q3_p3"
+      ],
+      "retrieved_versions": [
+        "v3",
+        "2026Q3",
+        "v3",
+        "v3",
+        "v3",
+        "v2",
+        "v2",
+        "v2",
+        "v2",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": true,
+      "reciprocal_rank": 1.0,
+      "version_accuracy": 1.0,
+      "stale_hits": 0,
+      "answer": "单笔报销金额超过 **2000 元** 需要先经部门负责人审批 [expense_reimbursement_policy_p3]。",
+      "citations": [
+        "expense_reimbursement_policy_p3"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问企业内部报销审批流程，属于企业知识库覆盖范围，必须检索。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 6316,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案所含事实断言（单笔报销金额超过2000元需要先经部门负责人审批）完全对应参考资料[expense_reimbursement_policy_p3]的原文，无任何无依据表述；引用正确；参考资料充分且答案正常作答。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "t1",
+      "query": "2026年第一季度的销售返点政策是怎么规定的？",
+      "category": "trap",
+      "trap_type": "expired_version",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p2",
+        "it_security_policy_p3",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p0",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p2",
+        "it_security_policy_p1"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v2",
+        "v3",
+        "v2",
+        "v3",
+        "v3",
+        "v2"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 0,
+      "answer": "根据现有资料无法确认2026年第一季度的销售返点政策。所有参考资料中的销售政策均为2026年第三季度（有效期2026-07-01至2026-09-30）的内容，未包含2026年第一季度的相关规定。",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "用户明确询问企业内部销售返点政策，需查企业知识库获取准确规定。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 8431,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "这是拒答",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "t2",
+      "query": "2026年第二季度华东区的区域补贴是多少？",
+      "category": "trap",
+      "trap_type": "expired_version",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p3",
+        "expense_reimbursement_policy_p0",
+        "sales_policy_2026q3_p2",
+        "it_security_policy_p3",
+        "it_security_policy_p0",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p1"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v3",
+        "2026Q3",
+        "v2",
+        "v2",
+        "v3",
+        "v2",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 0,
+      "answer": "根据现有资料无法确认2026年第二季度华东区的区域补贴。参考资料中仅有2026年第三季度（2026-07-01~2026-09-30）的销售政策，其中提到华东区区域补贴为0.8个百分点 [sales_policy_2026q3_p1]，但第二季度的政策未提供。",
+      "citations": [
+        "sales_policy_2026q3_p1"
+      ],
+      "route": "retrieve",
+      "route_reason": "用户询问2026年第二季度华东区的区域补贴金额，属于企业内部政策或数据，必须检索知识库。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 13134,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "系统答案为拒答，所有断言均有依据。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "t3",
+      "query": "2026年第二季度相比第一季度，返点比例有哪些变化？",
+      "category": "trap",
+      "trap_type": "comparison_expired",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "retrieved_chunk_ids": [
+        "sales_policy_2026q3_p3",
+        "sales_policy_2026q3_p1",
+        "sales_policy_2026q3_p0",
+        "sales_policy_2026q3_p2",
+        "it_security_policy_p1",
+        "expense_reimbursement_policy_p1",
+        "it_security_policy_p2",
+        "expense_reimbursement_policy_p3",
+        "expense_reimbursement_policy_p0",
+        "expense_reimbursement_policy_p2"
+      ],
+      "retrieved_versions": [
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "2026Q3",
+        "v2",
+        "v3",
+        "v2",
+        "v3",
+        "v3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 0,
+      "answer": "根据现有资料无法确认2026年第二季度相比第一季度的返点比例变化，因为参考资料中只有2026年Q3（7月~9月）的销售政策，没有包含2026年Q1和Q2的返点比例数据。",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "涉及企业内部返点比例政策变化，需要查询企业知识库获取准确数据。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 7999,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案为拒答，不包含任何事实性断言，忠实度给1。答案无引用，引用准确率给1。参考资料中无Q1/Q2数据，拒答正确。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "t4",
+      "query": "公司员工的年假有多少天？",
+      "category": "trap",
+      "trap_type": "out_of_corpus",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p0",
+        "expense_reimbursement_policy_p3",
+        "it_security_policy_p1",
+        "sales_policy_2026q3_p3",
+        "it_security_policy_p2",
+        "expense_reimbursement_policy_p0",
+        "sales_policy_2026q3_p0",
+        "it_security_policy_p3",
+        "sales_policy_2026q3_p2",
+        "expense_reimbursement_policy_p2"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v3",
+        "v2",
+        "2026Q3",
+        "v2",
+        "v3",
+        "2026Q3",
+        "v2",
+        "2026Q3",
+        "v3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 0,
+      "answer": "根据现有资料无法确认。",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "询问公司员工年假天数，属于企业内部制度问题，必须检索知识库才能准确回答。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 7120,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案不含任何事实性断言，属于拒答（资料不足导致的拒绝作答）。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    },
+    {
+      "id": "t5",
+      "query": "公司是否为员工提供补充商业医疗保险？",
+      "category": "trap",
+      "trap_type": "out_of_corpus",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "retrieved_chunk_ids": [
+        "it_security_policy_p2",
+        "it_security_policy_p0",
+        "expense_reimbursement_policy_p0",
+        "sales_policy_2026q3_p2",
+        "it_security_policy_p3",
+        "sales_policy_2026q3_p1",
+        "expense_reimbursement_policy_p3",
+        "sales_policy_2026q3_p3",
+        "expense_reimbursement_policy_p2",
+        "sales_policy_2026q3_p0"
+      ],
+      "retrieved_versions": [
+        "v2",
+        "v2",
+        "v3",
+        "2026Q3",
+        "v2",
+        "2026Q3",
+        "v3",
+        "2026Q3",
+        "v3",
+        "2026Q3"
+      ],
+      "stale_versions": [
+        "2026Q1",
+        "2026Q2"
+      ],
+      "hit_at_k": null,
+      "reciprocal_rank": null,
+      "version_accuracy": null,
+      "stale_hits": 0,
+      "answer": "根据现有资料无法确认公司是否为员工提供补充商业医疗保险。",
+      "citations": [],
+      "route": "retrieve",
+      "route_reason": "询问公司是否为员工提供补充商业医疗保险属于企业内部福利政策，需要查阅企业知识库才能准确回答。",
+      "sub_queries": [],
+      "verdict": "pass",
+      "unsupported_claims": [],
+      "retry_count": 0,
+      "retrieval_attempts": 1,
+      "llm_model": "deepseek-v4-flash",
+      "elapsed_ms": 7747,
+      "error": "",
+      "error_retries": 0,
+      "error_history": [],
+      "judge": {
+        "faithfulness": 1.0,
+        "citation_accuracy": 1.0,
+        "unsupported_claims": [],
+        "refusal_correct": true,
+        "reason": "答案属于拒答，不含任何事实性断言，参考资料中也确实没有关于补充商业医疗保险的内容。没有引用任何chunk，因此引用准确率为1。",
+        "judge_failed": false,
+        "context_truncated": false
+      }
+    }
+  ]
+}

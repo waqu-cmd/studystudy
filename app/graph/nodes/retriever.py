@@ -81,7 +81,6 @@ from functools import lru_cache
 from typing import Any
 
 from app.core.config import settings
-from app.core.logging import logger
 from app.graph.state import NODE_RETRIEVER, GraphState, make_event
 from app.mcp_client import MCPToolClient, get_default_mcp
 from app.rag.retriever import HybridRetriever
@@ -120,8 +119,7 @@ def _to_chunk(item: dict[str, Any]) -> RetrievedChunk | None:
     payload = {key: value for key, value in item.items() if key in allowed}
     try:
         return RetrievedChunk(**payload)
-    except Exception as exc:  # noqa: BLE001 - 单条脏数据不应中断整轮检索
-        logger.debug("跳过无法解析的召回条目：{} | {}", type(exc).__name__, item.get("chunk_id"))
+    except Exception:  # noqa: BLE001 - 单条脏数据不应中断整轮检索
         return None
 
 
@@ -146,13 +144,6 @@ def _search_via_mcp(
         return None, result.error
 
     chunks = [chunk for chunk in map(_to_chunk, result.as_items()) if chunk is not None]
-    logger.debug(
-        "MCP 检索完成 | server={} | items={} | 解析成功={} | {}ms",
-        result.server,
-        len(result.as_items()),
-        len(chunks),
-        result.elapsed_ms,
-    )
     return chunks, ""
 
 
@@ -189,7 +180,6 @@ def retriever_node(
     retry_delta = {"retry_count": retry_count + 1} if attempt > 1 else {}
 
     if not search_query:
-        logger.warning("retriever 节点收到空的检索词，跳过检索")
         return {
             "retrieval_attempts": attempt,
             **retry_delta,
@@ -224,11 +214,6 @@ def retriever_node(
                 client, search_query, top_k, include_expired
             )
             if hits is None:
-                logger.warning(
-                    "MCP 检索不可用，降级为无参考资料 | query={!r} | 原因={}",
-                    search_query[:30],
-                    channel_error,
-                )
                 return {
                     "retrieval_attempts": attempt,
                     **retry_delta,
@@ -245,7 +230,6 @@ def retriever_node(
             hits = _search_via_local(engine, search_query, top_k, include_expired)
 
     except Exception as exc:  # noqa: BLE001 - 单节点失败不应中断整轮问答
-        logger.exception("检索失败 | channel={} | query={!r}", channel, search_query[:30])
         return {
             "retrieval_attempts": attempt,
             **retry_delta,
@@ -260,18 +244,6 @@ def retriever_node(
 
     delta = [hit for hit in hits if hit.chunk_id not in existing]
 
-    logger.info(
-        "retriever | channel={} | attempt={} | fanout={} | query={!r} | 命中={} | "
-        "新增={} | 累计={} | retry={}",
-        channel,
-        attempt,
-        bool(state.get("fanout")),
-        search_query[:30],
-        len(hits),
-        len(delta),
-        len(existing) + len(delta),
-        retry_delta.get("retry_count", retry_count),
-    )
 
     if state.get("fanout"):
         # 子问题检索：用子问题文本替代「第 N 轮」标签，让执行轨迹能分辨

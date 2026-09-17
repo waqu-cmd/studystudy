@@ -1,6 +1,5 @@
 # ============================================================
-# 企业知识库智能分析 Agent 平台
-# 本文件是依赖的唯一权威来源（single source of truth）。
+# 企业知识库智能分析 Agent 平台.本文件是依赖的唯一权威来源。
 # 安装：pip install -e ".[dev]"
 # ============================================================
 
@@ -32,13 +31,11 @@ dependencies = [
   "pydantic==2.10.4",
   "pydantic-settings==2.7.0",
   "python-dotenv==1.0.1",
-  "loguru==0.7.3",
 
   # ---------- 文档解析与检索 ----------
   "pypdf==5.1.0",
   "markdown-it-py==3.0.0",
   "rank-bm25==0.2.2",
-  # chunker 直接 import yaml 解析 front-matter，属直接依赖，必须显式声明
   "pyyaml==6.0.3",
 
   # ---------- HTTP ----------
@@ -52,9 +49,6 @@ dependencies = [
   "langchain-community==0.3.5",
   "langgraph-checkpoint==2.1.2",
   "langgraph-sdk==0.1.74",
-  # 本项目刻意不声明 langsmith：不使用 LangSmith 追踪，config 层会在进程启动时
-  # 强制清除 LANGCHAIN_* / LANGSMITH_* 环境变量。它仍会作为 langchain-core 的
-  # 传递依赖被安装（框架内部 import 它），属于框架自带，不是本项目的用法。
   "openai==1.109.1",
   "tiktoken==0.14.0",
   "chroma-hnswlib==0.7.6",
@@ -68,7 +62,6 @@ dependencies = [
 dev = [
   "pytest==8.3.4",
   "pytest-asyncio==0.25.0",
-  "pytest-cov==6.0.0",
 ]
 
 # ---------- setuptools ----------
@@ -86,12 +79,3 @@ asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
-
-# ---------- coverage ----------
-[tool.coverage.run]
-source = ["app"]
-branch = true
-
-[tool.coverage.report]
-show_missing = true
-skip_covered = true

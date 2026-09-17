@@ -34,7 +34,6 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from app.core.config import settings
-from app.core.logging import logger, setup_mcp_logging
 
 mcp = FastMCP("enterprise-kb-search")
 
@@ -71,7 +70,6 @@ def web_search(query: str, max_results: int = 5) -> dict:
         }
 
     if not is_configured():
-        logger.warning("web_search 被调用但未配置外部搜索服务")
         return {
             "results": [],
             "provider": settings.search_provider,
@@ -91,14 +89,12 @@ def web_search(query: str, max_results: int = 5) -> dict:
             response.raise_for_status()
             data = response.json()
     except httpx.HTTPStatusError as exc:
-        logger.error("web_search HTTP 错误 | status={}", exc.response.status_code)
         return {
             "results": [],
             "provider": settings.search_provider,
             "error": f"搜索服务返回 HTTP {exc.response.status_code}",
         }
     except Exception as exc:  # noqa: BLE001
-        logger.exception("web_search 调用失败")
         return {
             "results": [],
             "provider": settings.search_provider,
@@ -119,7 +115,6 @@ def web_search(query: str, max_results: int = 5) -> dict:
             }
         )
 
-    logger.info("web_search | query={!r} | results={}", text[:40], len(results))
     return {
         "results": results,
         "provider": settings.search_provider,
@@ -128,13 +123,7 @@ def web_search(query: str, max_results: int = 5) -> dict:
 
 
 def main() -> None:
-    """入口：先配 stderr 日志，再进 stdio 事件循环。"""
-    setup_mcp_logging()
-    logger.info(
-        "search_server 启动 | provider={} | configured={}",
-        settings.search_provider or "(未设置)",
-        is_configured(),
-    )
+    """入口：进 stdio 事件循环。"""
     mcp.run(transport="stdio")
 
 

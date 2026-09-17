@@ -1,0 +1,423 @@
+{
+  "version": "1.0",
+  "created_at": "2026-09-16",
+  "as_of_date": "2026-09-16",
+  "corpus": {
+    "documents": 30,
+    "chunks_total": 144,
+    "chunks_active": 128,
+    "chunks_expired": 16,
+    "expanded_at": "2026-09-17",
+    "expansion_note": "语料由 5 篇 / 20 块扩容至 29 篇 / 140 块，新增 24 篇制度文档（研发技术、供应链、人事组织、客户运营、财务合规五类），题目未做任何改动。扩容的动因是原语料规模过小、评估指标的代表性易受质疑。新增的 procurement_policy_2025 是刻意保留的已失效历史版本，用于给『时效过滤』这一路补充销售政策之外的过期干扰项。新增语料刻意不涉及年假与商业医疗保险，以免破坏 t4 / t5 两道 out_of_corpus 陷阱题的前提。",
+    "rolled_at": "2026-09-17",
+    "rollover_note": "新增 sales_policy_2026q4 并完成 10 道销售类题目的版本迁移（2026Q3 -> 2026Q4）。动因是原窗口 expires_on=2026-09-30 会在 13 天后使全部销售类题目失效。迁移同时把 Q3 的 expire_date 前移至 2026-09-16、Q4 的 effective_date 定为 2026-09-17，令两个季度版本的有效期首尾相接而不重叠 —— 首轮实测（Q3 仍留在有效集时）版本准确率仅 0.4000、MRR 0.6583、Hit@3 0.9000，6/10 题的 top-1 落在 Q3 的同名小节上。根因是两块正文高度同形（多数句子逐字相同、仅数值不同），检索器没有任何依据偏向后发布者；因此重叠被判定为语料设计缺陷，而非可调参项。Q4 的关键取值刻意避开全部历史版本：新客户返点 4.0%、存量续约 2.2%、区域补贴 1.0、审批门槛 800 万、发放日次月 5 日前、达成率阈值 85%；其中尤须避开 Q1 特有的 2.5% 与 500 万 —— t1 的判据正是『答案中不得出现仅属于 Q1 的这两个数字』。Q3 退出有效集后成为第三个销售类过期版本，它与 Q4 的正文本就几乎逐字相同，因此成为时效过滤对照实验中最硬的一组证据：语义相似度无法区分版本，只有元数据过滤可以。Q4 的『适用范围』小节正文内含『（2026Q4 版）』标识，以保证带版本限定的提问（n06）能稳定命中。",
+    "docs_active": [
+      "sales_policy_2026q4",
+      "it_security_policy",
+      "expense_reimbursement_policy",
+      "anti_bribery_policy",
+      "asset_management_policy",
+      "bidding_management_policy",
+      "budget_management_policy",
+      "code_of_conduct_policy",
+      "code_review_policy",
+      "contract_review_policy",
+      "customer_complaint_policy",
+      "employee_training_policy",
+      "fund_payment_approval_policy",
+      "incident_response_policy",
+      "internal_audit_policy",
+      "marketing_event_policy",
+      "performance_review_policy",
+      "procurement_policy_2026",
+      "quality_management_policy",
+      "rd_project_management_policy",
+      "recruitment_policy",
+      "release_management_policy",
+      "service_level_agreement_policy",
+      "supplier_management_policy",
+      "technical_documentation_policy",
+      "whistleblower_policy"
+    ],
+    "docs_expired": [
+      "sales_policy_2026q1",
+      "sales_policy_2026q2",
+      "sales_policy_2026q3",
+      "procurement_policy_2025"
+    ]
+  },
+  "validity_window": {
+    "expires_on": "2026-12-31",
+    "reason": "全部销售类正常题的标答块现归档在 sales_policy_2026q4（有效期 2026-09-17 ~ 2026-12-31）之下，其余 20 道正常题引用的制度文档均为长期有效（expire_date 未设，取 NO_EXPIRE_ORD 哨兵）。2026-12-31 之后 Q4 转为过期，销售类题目的标答将不可检索，本 golden set 的期望随之失效。",
+    "rollover_note": "本文件按季度滚动维护：窗口临近时新增下一季度的销售政策文档，把 required_doc_versions 为当前季度的题目指向新版本，并同步更新 relevant_chunk_ids 与 corpus 计数。2026-09-17 已完成一次完整滚动（2026Q3 -> 2026Q4），可作为下次滚动的操作范例。下次滚动的目标版本为 2027Q1（effective 2027-01-01 / expire 2027-03-31）；注意新版本必须与 Q4 的有效期首尾相接而不重叠，否则会重现本次滚动中发现同形版本互相干扰的问题。",
+    "action_on_expiry": "新增一份更新季度的销售政策文档（front-matter 需含 doc_id / doc_title / version / effective_date / expire_date / source），把本文件中 required_doc_versions 为 2026Q4 的 10 道题改为该新版本，同步改写相关 relevant_chunk_ids 与 corpus 计数；tests/test_regression.py 的 test_answerable_cases_are_still_retrievable 会在窗口失效时直接失败并给出该提示。"
+  },
+  "field_notes": {
+    "relevant_chunk_ids": "标答块。陷阱题为空数组 —— 陷阱题没有正确答案块，其 Hit@3 指标不适用（记 None 而非 0 分）。",
+    "required_doc_versions": "首位召回块应当命中的版本集合，用于计算版本准确率；陷阱题为空数组。",
+    "should_refuse": "true 表示该题在启用时效过滤时必须拒答（资料不足）。此时『干净拒答』= 文本拒答且引用为空，两者必须同时成立。",
+    "expected_version_mapping": "阶段 1 的 baseline.json 使用 expected_version（单数），本文件改为 required_doc_versions（复数，与蓝图措辞一致）。q2~q5 与 t1 五个用例的取值与 baseline 完全对应；q1 已于 2026-09-17 随季度滚动迁至 2026Q4，而 baseline.json 作为历史快照保持不变，因此该题在两侧的版本取值存在一季差异，做逐题对比时需知悉。"
+  },
+  "cases": [
+    {
+      "id": "q1",
+      "query": "2026年第四季度新客户签约的返点比例是多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["sales_policy_2026q4_p1"],
+      "required_doc_versions": ["2026Q4"],
+      "note": "阶段 1 基线用例，2026-09-17 随季度滚动迁至 Q4（原为『2026年第三季度』/ sales_policy_2026q3_p1）。与 baseline.json 的距离仍是同一问法、同一小节，仅版本前移一季。"
+    },
+    {
+      "id": "q2",
+      "query": "华东区的区域补贴在标准返点基础上上浮多少个百分点？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["sales_policy_2026q4_p1"],
+      "required_doc_versions": ["2026Q4"],
+      "note": "阶段 1 基线用例。四个季度的同名小节都含『华东区补贴』表述且数值各不相同（Q1/Q2=0.5、Q3=0.8、Q4=1.0），是版本区分能力最强的检验点。"
+    },
+    {
+      "id": "q3",
+      "query": "单笔订单金额超过多少需要报销售VP审批？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["sales_policy_2026q4_p1"],
+      "required_doc_versions": ["2026Q4"],
+      "note": "阶段 1 基线用例。审批门槛四版各不相同（Q1=500 万、Q2/Q3=300 万、Q4=800 万），且 fund_payment_approval_policy 也含同形的金额分档表述，是版本混淆与同形干扰的双高危题。"
+    },
+    {
+      "id": "q4",
+      "query": "员工出差一线城市的住宿费上限是多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["expense_reimbursement_policy_p1"],
+      "required_doc_versions": ["v3"],
+      "note": "阶段 1 基线用例原文保留。"
+    },
+    {
+      "id": "q5",
+      "query": "公司账号密码的最短长度要求是多少位？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["it_security_policy_p1"],
+      "required_doc_versions": ["v2"],
+      "note": "阶段 1 基线用例原文保留。"
+    },
+    {
+      "id": "n06",
+      "query": "《2026Q4 销售政策》适用于哪些区域？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["sales_policy_2026q4_p0"],
+      "required_doc_versions": ["2026Q4"],
+      "note": "四大区列表在 Q1~Q4 四版中完全相同，属『版本正确但内容无差异』的对照题 —— 用于观察同形内容下版本是否仍被正确区分。"
+    },
+    {
+      "id": "n07",
+      "query": "2026Q4 的客户保护期是多久？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["sales_policy_2026q4_p2"],
+      "required_doc_versions": ["2026Q4"],
+      "note": "保护期 Q1=6 个月、Q2=9 个月、Q3/Q4 均为 12 个月，其中 Q4 明确『维持不变』。问法由『延长到多久』改为『是多久』，以免与 Q4 的延续语义冲突。"
+    },
+    {
+      "id": "n08",
+      "query": "销售代表在保护期内重复跟进其他同事的客户，会有什么处罚？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["sales_policy_2026q4_p2"],
+      "required_doc_versions": ["2026Q4"],
+      "note": "该处罚条款在四个季度版本中文字完全相同，属跨版本无差异的对照题。"
+    },
+    {
+      "id": "n09",
+      "query": "跨区报备需要提前几个工作日在 CRM 中提交？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["sales_policy_2026q4_p2"],
+      "required_doc_versions": ["2026Q4"],
+      "note": "报备时限在四个季度版本中均为 3 个工作日，属跨版本无差异的对照题。"
+    },
+    {
+      "id": "n10",
+      "query": "2026Q4 的返点在次月几号之前随工资发放？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["sales_policy_2026q4_p3"],
+      "required_doc_versions": ["2026Q4"],
+      "note": "发放时间三次前移：Q1/Q2 为『次月 15 日前』，Q3 提前至『次月 10 日前』，Q4 进一步提前至『次月 5 日前』。"
+    },
+    {
+      "id": "n11",
+      "query": "季度累计达成率低于 85% 会有什么后果？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["sales_policy_2026q4_p3"],
+      "required_doc_versions": ["2026Q4"],
+      "note": "该题的问法本身携带阈值：Q1~Q3 均为 80%，Q4 上调至 85%，故问法与标答在本次季度滚动中同步更新。"
+    },
+    {
+      "id": "n12",
+      "query": "我这个季度新签一单能拿几个点的提成？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["sales_policy_2026q4_p1"],
+      "required_doc_versions": ["2026Q4"],
+      "note": "口语化改写题：与文档用词（『返点比例』『新客户签约』）字面重叠极低，考察稠密一路在缺少词汇重合时的召回能力。"
+    },
+    {
+      "id": "n13",
+      "query": "公司配发的笔记本电脑可以带回家吗？需要满足什么安全条件？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["it_security_policy_p0"],
+      "required_doc_versions": ["v2"],
+      "note": "答案含两个要件（允许带回家 + 全盘加密与开机口令），考察多要件完整性。"
+    },
+    {
+      "id": "n14",
+      "query": "办公设备能不能自己装软件？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["it_security_policy_p0"],
+      "required_doc_versions": ["v2"],
+      "note": "口语化改写题，对应『禁止安装未经 IT 部门授权的软件』。"
+    },
+    {
+      "id": "n15",
+      "query": "设备遗失后必须在多长时间内报备？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["it_security_policy_p0"],
+      "required_doc_versions": ["v2"],
+      "note": null
+    },
+    {
+      "id": "n16",
+      "query": "密码多久需要强制更换一次？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["it_security_policy_p1"],
+      "required_doc_versions": ["v2"],
+      "note": "『90 天』与同块内的『12 位』『最近 5 次』都是数字干扰项。"
+    },
+    {
+      "id": "n17",
+      "query": "哪些类型的数据被禁止外发？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["it_security_policy_p2"],
+      "required_doc_versions": ["v2"],
+      "note": "需完整列出客户数据、合同文本、财务数据三类。"
+    },
+    {
+      "id": "n18",
+      "query": "确需向外部提供数据时应该走什么渠道？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["it_security_policy_p2"],
+      "required_doc_versions": ["v2"],
+      "note": "对应『加密邮件网关 + 抄送信息安全负责人』两个要件。"
+    },
+    {
+      "id": "n19",
+      "query": "用个人网盘传公司数据算什么性质的问题？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["it_security_policy_p2"],
+      "required_doc_versions": ["v2"],
+      "note": "答案须为『严重违规』这一确定定性，不得弱化为『不建议』。"
+    },
+    {
+      "id": "n20",
+      "query": "第一次违反信息安全制度会怎么处理？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["it_security_policy_p3"],
+      "required_doc_versions": ["v2"],
+      "note": null
+    },
+    {
+      "id": "n21",
+      "query": "造成数据泄露可能面临哪些处罚？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["it_security_policy_p3"],
+      "required_doc_versions": ["v2"],
+      "note": "答案为降级、解除劳动合同、保留追究法律责任三项。"
+    },
+    {
+      "id": "n22",
+      "query": "市内打车费每人每月上限是多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["expense_reimbursement_policy_p0"],
+      "required_doc_versions": ["v3"],
+      "note": null
+    },
+    {
+      "id": "n23",
+      "query": "城际出行坐飞机有什么限制？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["expense_reimbursement_policy_p0"],
+      "required_doc_versions": ["v3"],
+      "note": "答案含『仅限经济舱』与『提前 7 天预订』两个要件。"
+    },
+    {
+      "id": "n24",
+      "query": "晚上十点以后因公打车，费用怎么算？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["expense_reimbursement_policy_p0"],
+      "required_doc_versions": ["v3"],
+      "note": "答案含『不计入月度上限』与『需在报销单中单独说明事由』两个要件。"
+    },
+    {
+      "id": "n25",
+      "query": "去二线城市出差，住宿费每晚最多能报多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["expense_reimbursement_policy_p1"],
+      "required_doc_versions": ["v3"],
+      "note": "『二线城市』对应文档中的『其他城市』，属同义改写。"
+    },
+    {
+      "id": "n26",
+      "query": "住宿费超出标准的部分需要谁同意才能报销？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["expense_reimbursement_policy_p1"],
+      "required_doc_versions": ["v3"],
+      "note": null
+    },
+    {
+      "id": "n27",
+      "query": "客户招待的人均标准是多少？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["expense_reimbursement_policy_p2"],
+      "required_doc_versions": ["v3"],
+      "note": "同块内还有『单次总额 3000 元』，属数字干扰项。"
+    },
+    {
+      "id": "n28",
+      "query": "请客户吃饭一次最多能花多少钱？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["expense_reimbursement_policy_p2"],
+      "required_doc_versions": ["v3"],
+      "note": "口语化改写题。与 n27 同块但问的是不同要件（单次总额），考察是否混淆同块内的两个数字。"
+    },
+    {
+      "id": "n29",
+      "query": "上个月的报销单要在每月几号前提交？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["expense_reimbursement_policy_p3"],
+      "required_doc_versions": ["v3"],
+      "note": "同块内还有『10 个工作日』与『2000 元』，属数字干扰项。"
+    },
+    {
+      "id": "n30",
+      "query": "单笔报销金额超过多少需要先经部门负责人审批？",
+      "category": "normal",
+      "trap_type": null,
+      "should_refuse": false,
+      "relevant_chunk_ids": ["expense_reimbursement_policy_p3"],
+      "required_doc_versions": ["v3"],
+      "note": "注意与 q3（销售订单 300 万审批）区分：两题答案不同，且都会召回含『审批』字样的块，考察跨文档串扰。"
+    },
+    {
+      "id": "t1",
+      "query": "2026年第一季度的销售返点政策是怎么规定的？",
+      "category": "trap",
+      "trap_type": "expired_version",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "forbidden_versions": ["2026Q1"],
+      "forbidden_strings": ["2.5%", "500 万", "500万"],
+      "note": "阶段 1 基线用例原文保留。Q1 已于 2026-03-31 失效。正确行为：检索不到 Q1 的块并如实拒答，答案中不得出现仅属于 Q1 的 2.5% 与 500 万。"
+    },
+    {
+      "id": "t2",
+      "query": "2026年第二季度华东区的区域补贴是多少？",
+      "category": "trap",
+      "trap_type": "expired_version",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "forbidden_versions": ["2026Q2"],
+      "forbidden_strings": ["3.0%"],
+      "note": "Q2 已于 2026-06-30 失效。该题最容易被『就近作答』：Q3 的华东补贴条款措辞极相似（0.8 个百分点），把 Q3 数值当作 Q2 作答即属错误。正确行为是拒答。"
+    },
+    {
+      "id": "t3",
+      "query": "2026年第二季度相比第一季度，返点比例有哪些变化？",
+      "category": "trap",
+      "trap_type": "comparison_expired",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "forbidden_versions": ["2026Q1", "2026Q2"],
+      "forbidden_strings": ["2.5%", "3.0%"],
+      "note": "复合问题，且两个被比较的版本均已过期。期望 supervisor 拆出 ≥2 个子问题触发 Send 并行检索，随后如实拒答（阶段 6 实测已确认这是正确行为）。"
+    },
+    {
+      "id": "t4",
+      "query": "公司员工的年假有多少天？",
+      "category": "trap",
+      "trap_type": "out_of_corpus",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "forbidden_versions": [],
+      "forbidden_strings": [],
+      "note": "语料完全未涉及假期制度。考察『检索总会返回 top_k 条结果』这一事实下，模型是否会把无关召回块当作依据强行作答。"
+    },
+    {
+      "id": "t5",
+      "query": "公司是否为员工提供补充商业医疗保险？",
+      "category": "trap",
+      "trap_type": "out_of_corpus",
+      "should_refuse": true,
+      "relevant_chunk_ids": [],
+      "required_doc_versions": [],
+      "forbidden_versions": [],
+      "forbidden_strings": [],
+      "note": "语料未涉及保险福利。与 t4 的区别：该题的词汇（『公司』『员工』）在语料中高频出现，召回置信度更高，更易诱导编造。"
+    }
+  ]
+}

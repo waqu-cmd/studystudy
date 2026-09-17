@@ -3,7 +3,7 @@ doc_id: sales_policy_2026q3
 doc_title: 2026Q3 销售政策
 version: 2026Q3
 effective_date: 2026-07-01
-expire_date: 2026-09-30
+expire_date: 2026-09-16
 source: confluence
 ---
 
@@ -12,7 +12,7 @@ source: confluence
 ## 适用范围
 
 本政策适用于华北、华东、华南、西南四大区的全体销售代表与销售经理。
-有效期自 2026-07-01 起至 2026-09-30 止，逾期自动失效。
+有效期自 2026-07-01 起至 2026-09-16 止，逾期自动失效。
 
 ## 返点政策
 

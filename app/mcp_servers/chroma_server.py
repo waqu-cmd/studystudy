@@ -27,12 +27,12 @@
 
 约束 2：本文件**不能**向 stdout 写任何非协议内容。
     stdio 传输下 stdout 被 JSON-RPC 独占，一行 ``print`` 就会破坏握手。
-    所有日志必须走 stderr —— 因此入口用 ``setup_mcp_logging()``。
+    本 Server 因此不产生任何 stdout 输出。
 
 约束 3（最隐蔽的一条）：**工具函数内部不得执行「首次 import」**。
     实测：一个只在工具函数里 ``importlib.import_module("app.rag.retriever")`` 的
     探针 Server，该调用**永久挂起**（180s 超时也不返回），而同类探针中
-    纯返回、同步 ``time.sleep(2)``、同步 HTTP 请求、stderr 日志全部正常。
+    纯返回、同步 ``time.sleep(2)``、同步 HTTP 请求全部正常。
     FastMCP 把同步工具交给工作线程执行，而 import 需要获取全局 import lock ——
     与事件循环线程的 import 需求互锁，形成死锁。表现极具误导性：**首次调用挂起、
     第二次起正常**（模块已被加载），极易被误判为「首次连接慢」。
@@ -44,13 +44,10 @@
     BM25 语料缓存跨多次调用复用；每调用重建会让每次检索多付数百毫秒。
 """
 
-from typing import Any
-
 from mcp.server.fastmcp import FastMCP
 
 # 顶层 import（约束 3）：绝不能在工具函数内首次 import
 from app.core.config import settings
-from app.core.logging import logger, setup_mcp_logging
 from app.rag.indexer import get_collection
 from app.rag.retriever import HybridRetriever, load_corpus
 
@@ -74,24 +71,14 @@ def warmup() -> None:
     全部在单线程阶段完成，既避开约束 3 的 import 锁竞争，也让第一次真实调用
     不必承担冷启动成本（实测冷启动约 3 秒，会直接被调用方误判为超时）。
 
-    失败只告警不阻止启动：Chroma 目录损坏时，Server 仍应能起来让 ``/health``
+    失败不阻止启动：Chroma 目录损坏时，Server 仍应能起来让 ``/health``
     反映出问题，而不是连握手都完成不了。真正的错误会在首次调用时再次暴露。
     """
     try:
         corpus = load_corpus()
         _get_retriever()
-        logger.info(
-            "预热完成 | collection={} | 块数={} | 未过期={}",
-            get_collection().name,
-            len(corpus.ids),
-            len(corpus.active_positions),
-        )
-    except Exception as exc:  # noqa: BLE001 - 预热失败不应阻止 Server 启动
-        logger.warning(
-            "预热失败（Server 仍会启动，首次调用将重试）：{}: {}",
-            type(exc).__name__,
-            exc,
-        )
+    except Exception:  # noqa: BLE001 - 预热失败不应阻止 Server 启动
+        pass
 
 
 @mcp.tool(
@@ -121,7 +108,6 @@ def search_documents(
     """
     text = (query or "").strip()
     if not text:
-        logger.warning("search_documents 收到空检索词，返回空结果")
         return []
 
     limit = int(top_k) if top_k and int(top_k) > 0 else settings.top_k
@@ -129,17 +115,9 @@ def search_documents(
         hits = _get_retriever().search(
             text, top_k=limit, include_expired=bool(include_expired)
         )
-    except Exception as exc:  # noqa: BLE001 - 工具层不抛异常，转成诊断条目 + 日志
-        logger.exception("search_documents 检索失败 | query={!r}", text[:40])
+    except Exception as exc:  # noqa: BLE001 - 工具层不抛异常，转成诊断条目
         return [{"error": f"{type(exc).__name__}: {exc}", "chunk_id": ""}]
 
-    logger.info(
-        "search_documents | query={!r} | top_k={} | expired={} | hits={}",
-        text[:40],
-        limit,
-        bool(include_expired),
-        len(hits),
-    )
     return [hit.model_dump() for hit in hits]
 
 
@@ -155,13 +133,11 @@ def collection_stats() -> dict:
         collection = get_collection()
         total = int(collection.count())
     except Exception as exc:  # noqa: BLE001
-        logger.exception("collection_stats 失败")
         return {"error": f"{type(exc).__name__}: {exc}", "total": -1}
 
     try:
         active = len(load_corpus().active_positions)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("collection_stats 未过期计数失败：{}", exc)
+    except Exception:  # noqa: BLE001 - 未过期计数失败时用 -1 表示不可用
         active = -1
 
     return {
@@ -174,19 +150,11 @@ def collection_stats() -> dict:
 
 
 def main() -> None:
-    """入口：配 stderr 日志 → 预热 → 进 stdio 事件循环。
+    """入口：预热 → 进 stdio 事件循环。
 
-    顺序不可颠倒：
-    - ``setup_mcp_logging()`` 必须最先，否则预热期的日志可能落在默认 sink 上。
-    - ``warmup()`` 必须在 ``mcp.run()`` 之前 —— 那时还是单线程，
-      不存在约束 3 描述的 import 锁竞争。
+    ``warmup()`` 必须在 ``mcp.run()`` 之前 —— 那时还是单线程，
+    不存在约束 3 描述的 import 锁竞争。
     """
-    setup_mcp_logging()
-    logger.info(
-        "chroma_server 启动 | collection={} | path={}",
-        settings.chroma_collection,
-        settings.chroma_path,
-    )
     warmup()
     mcp.run(transport="stdio")
 
